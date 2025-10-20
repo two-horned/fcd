@@ -2,7 +2,7 @@ name := "first-class-derivatives"
 
 version := "1.0"
 
-scalaVersion := "2.11.7"
+scalaVersion := "3.7.3"
 
 scalacOptions ++= Seq("-feature", "-deprecation")
 
