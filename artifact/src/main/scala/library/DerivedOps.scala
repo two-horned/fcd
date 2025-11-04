@@ -1,6 +1,6 @@
 package fcd
 
-trait DerivedOps { self: Parsers with Syntax =>
+trait DerivedOps { self: Parsers & Syntax =>
 
   val any: Parser[Elem] = acceptIf(_ => true)
 
@@ -8,7 +8,7 @@ trait DerivedOps { self: Parsers with Syntax =>
 
   def no(t: Elem): Parser[Elem] = acceptIf(_ != t)
 
-  def acceptSeq[ES <% Iterable[Elem]](es: ES): Parser[List[Elem]] =
+  def acceptSeq(es: Iterable[Elem]): Parser[List[Elem]] =
     es.foldRight[Parser[List[Elem]]](succeed(Nil)) { (x, pxs) =>
       accept(x) ~ pxs map mkList
     }
@@ -29,16 +29,15 @@ trait DerivedOps { self: Parsers with Syntax =>
   // def always[T](t: T): Parser[T] =
   //   many(any) map { _ => t }
 
-  def oneOf[ES <% Iterable[Elem]](s: ES): Parser[Elem] = acceptIf {
+  def oneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf {
     t => s.exists(_ == t)
   }
 
-  def noneOf[ES <% Iterable[Elem]](s: ES): Parser[Elem] = acceptIf {
+  def noneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf {
     t => s.forall(_ != t)
   }
 
-  def opt[T](p: Parser[T]): Parser[Option[T]] =
-    alt(p map { r => Some(r) }, succeed(None))
+  def opt[T](p: Parser[T]): Parser[Option[T]] = alt(p map { r => Some(r) }, succeed(None))
 
   def manyN[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
@@ -61,11 +60,8 @@ trait DerivedOps { self: Parsers with Syntax =>
     some_v
   }
 
-  def manyCount(p: Parser[Any]): Parser[Int] =
-    many(p) map { _.size }
-
-  def someCount(p: Parser[Any]): Parser[Int] =
-    some(p) map { _.size }
+  def manyCount(p: Parser[Any]): Parser[Int] = many(p) map { _.size }
+  def someCount(p: Parser[Any]): Parser[Int] = some(p) map { _.size }
 
   // distributive law - chains a list of parsers
   // --> in Haskell one would use `traverse`
@@ -80,17 +76,14 @@ trait DerivedOps { self: Parsers with Syntax =>
   def consumed[T](p: Parser[T]): Parser[List[Elem]] =
     many(any) <& p
 
-  def eat[R](f: Elem => Parser[R]): Parser[R] =
-    any >> f
+  def eat[R](f: Elem => Parser[R]): Parser[R] = any >> f
 
   def delegate[T](p: Parser[T]): Parser[Parser[T]] =
     succeed(p) | eat { c => delegate(p << c) }
 
   def delegateN[T](n: Int, p: Parser[T]): Parser[Parser[T]] =
-    if (n <= 0)
-      succeed(p)
-    else
-      eat { c => delegateN(n - 1, p << c) }
+    if (n <= 0) succeed(p)
+    else eat { c => delegateN(n - 1, p << c) }
 
   // collects the results of parsers
   def collect[T](ps: List[Parser[T]]): Parser[List[T]] =
@@ -117,8 +110,7 @@ trait DerivedOps { self: Parsers with Syntax =>
 
   private def mkList[T] = (_: ~[T, List[T]]) match { case x ~ xs => x :: xs }
 
-  val succeedForever: NT[Unit] =
-    succeed(()) | (any ~> succeedForever)
+  val succeedForever: NT[Unit] = succeed(()) | (any ~> succeedForever)
 
   def rightDerivative[R](p: Parser[R], elem: Elem): Parser[R] =
     done(p << elem) | eat { c => rightDerivative(p << c, elem) }
@@ -147,8 +139,7 @@ trait DerivedOps { self: Parsers with Syntax =>
   def filter[T](pred: Elem => Boolean): Parser[T] => Parser[T] =
     rep(el => p => if (pred(el)) (p << el) else p)
 
-  def skip[T]: Parser[T] => Parser[T] =
-    rep(el => p => p)
+  def skip[T]: Parser[T] => Parser[T] = rep(el => p => p)
 
   def mapIn[T](f: Elem => Elem): Parser[T] => Parser[T] =
     rep(el => p => p << f(el))
@@ -178,7 +169,7 @@ trait DerivedOps { self: Parsers with Syntax =>
   def greedyMany[T](p: Parser[T]): Parser[List[T]] = greedySome(p) | succeed(Nil)
 
   // Instead of a class use a closure:
-  def greedySome[T]: Parser[T] => NT[List[T]] = { p =>
+  def greedySome[T]: Parser[T] => Parser[List[T]] = { p =>
 
     def withNext(p: Parser[T], ps: Parser[List[T]]): Parser[List[T]] =
       done(p) ~ ps ^^ { case t ~ ts => t :: ts }
