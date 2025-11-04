@@ -17,19 +17,19 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def failed: Boolean
 
     def alt[U >: R](q: Parser[U]): Parser[U] = q alt2 p
-    def alt2[U >: R](q: Parser[U]): Parser[U] = new Alt(q, p)
+    def alt2[U >: R](q: Parser[U]): Parser[U] = Alt(q, p)
     def and[U](q: Parser[U]): Parser[(R, U)] = q and2 p
-    def and2[U](q: Parser[U]): Parser[(U, R)] = new And(q, p)
+    def and2[U](q: Parser[U]): Parser[(U, R)] = And(q, p)
     def seq[U](q: Parser[U]): Parser[R ~ U] = q seq2 p
     def seq2[U](q: Parser[U]): Parser[U ~ R] = new Seq(q, p)
-    def flatMap[U](f: R => Parser[U]): Parser[U] = new FlatMap(p, f)
+    def flatMap[U](f: R => Parser[U]): Parser[U] = FlatMap(p, f)
     def done: Parser[R] = if (accepts) Succeed(p.results) else fail
 
-    def not: Parser[Unit] = new Not(p)
+    def not: Parser[Unit] = Not(p)
 
     // the map family
     def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] =
-      new MapResults(p, f)
+      MapResults(p, f)
     def map[U](f: R => U): Parser[U] = p mapResults { ress => ress map f }
     def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
 
@@ -318,7 +318,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       this
     }
     var name = "nt"
-    private val rec = new DynamicVariable[Boolean](false)
+    private val rec = DynamicVariable[Boolean](false)
     override def toString =
       if (rec.value)
         s"nt(${System.identityHashCode(this)})"
@@ -340,7 +340,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   val fail: Parser[Nothing] = Fail
   val always: Parser[Unit] = Always
   def succeed[R](res: R): Parser[R] = Succeed(List(res))
-  def acceptIf(cond: Elem => Boolean): Parser[Elem] = new AcceptIf(cond)
+  def acceptIf(cond: Elem => Boolean): Parser[Elem] = AcceptIf(cond)
 
   // combinators with parser arguments
   def not[R](p: Parser[R]): Parser[Unit] = p.not
@@ -358,9 +358,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   def done[T](p: Parser[T]): Parser[T] = p.done
 
   override def nonterminal[R](_p: => Parser[R]): Nonterminal[R] =
-    new Nonterminal(_p)
+    Nonterminal(_p)
   def nonterminal[R](name: String)(_p: => Parser[R]): Nonterminal[R] =
-    new Nonterminal(_p).named(name)
+    Nonterminal(_p).named(name)
 
   def feed[R](p: Parser[R], in: Elem) = p.consume(in)
   def parse[R](p: Parser[R], in: Iterable[Elem]): Results[R] =

@@ -26,7 +26,7 @@ trait Printable {
        |""".stripMargin('|')
 
   def printToFile(path: String): Unit = {
-    val is = new ByteArrayInputStream(printGraph.getBytes("UTF-8"))
+    val is = ByteArrayInputStream(printGraph.getBytes("UTF-8"))
     (s"dot -Tpng -o $path" #< is) !
   }
 
