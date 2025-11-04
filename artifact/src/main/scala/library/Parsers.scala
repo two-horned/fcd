@@ -1,7 +1,5 @@
 package fcd
 
-import language.higherKinds
-
 trait Parsers {
 
   // the token type (`Elem`) and the type of the results are left abstract
@@ -42,13 +40,13 @@ trait Parsers {
   // For testing
   def isSuccess[R](p: Parser[R]): Boolean = !isFailure(p)
   def isFailure[R](p: Parser[R]): Boolean = !isSuccess(p)
-  def accepts[R, ES <% Iterable[Elem]](p: Parser[R], s: ES): Boolean = isSuccess(feedAll(p, s))
+  def accepts[R](p: Parser[R], s: Iterable[Elem]): Boolean = isSuccess(feedAll(p, s))
 
   // As optimization
   def always: Parser[Unit]
 }
 
-trait RichParsers extends Parsers with Syntax with DerivedOps with CharSyntax
+trait RichParsers extends Parsers, Syntax, DerivedOps, CharSyntax
 
 // A trait to bake parsers in a nested cake
 trait ParserUsage {
