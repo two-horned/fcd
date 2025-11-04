@@ -2,9 +2,9 @@ package fcd
 
 import language.implicitConversions
 
-trait Syntax { self: Parsers with DerivedOps =>
+trait Syntax { self: Parsers & DerivedOps =>
 
-  implicit class ParserOps[R, P <% Parser[R]](p: P) {
+  implicit class ParserOps[R](p: Parser[R]) {
     def <<(in: Elem): Parser[R] = self.feed(p, in)
     def <<<(in: Seq[Elem]): Parser[R] = self.feedAll(p, in)
     def parse(s: Seq[Elem]) = self.parse(p, s)

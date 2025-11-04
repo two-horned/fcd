@@ -28,13 +28,14 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def not: Parser[Unit] = new Not(p)
 
     // the map family
-    def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] = new MapResults(p, f)
+    def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] =
+      new MapResults(p, f)
     def map[U](f: R => U): Parser[U] = p mapResults { ress => ress map f }
     def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
 
     // for optimization of biased choice
     def prefix: Parser[Unit] = {
-       if (accepts) {
+      if (accepts) {
         always
       } else {
         eat { el => (p consume el).prefix }
@@ -44,7 +45,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   object Fail extends NullaryPrintable("∅") with Parser[Nothing] {
     override def results = List.empty
-    override def failed  = true
+    override def failed = true
     override def accepts = false
     override def consume: Elem => this.type = in => this
 
@@ -56,7 +57,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def and2[U](q: Parser[U]): this.type = this
     override def map[U](f: Nothing => U): this.type = this
     override def flatMap[U](g: Nothing => Parser[U]): this.type = this
-    override def mapResults[U](f: (=> Results[Nothing]) => Results[U]): this.type = this
+    override def mapResults[U](
+        f: (=> Results[Nothing]) => Results[U]
+    ): this.type = this
     override def done = this
 
     override def not: Parser[Unit] = Always
@@ -66,12 +69,16 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   object Always extends NullaryPrintable("∞") with Parser[Unit] {
     override def results = List(())
-    override def failed  = false
+    override def failed = false
     override def accepts = true
     override def consume = in => Always
     override def not: Parser[Unit] = fail
-    override def and[U](q: Parser[U]): Parser[(Unit, U)] = q map { r => ((), r) }
-    override def and2[U](q: Parser[U]): Parser[(U, Unit)] = q map { r => (r, ()) }
+    override def and[U](q: Parser[U]): Parser[(Unit, U)] = q map { r =>
+      ((), r)
+    }
+    override def and2[U](q: Parser[U]): Parser[(U, Unit)] = q map { r =>
+      (r, ())
+    }
 
     // this is a valid optimization, however it almost never occurs.
     override def alt[U >: Unit](q: Parser[U]) = this
@@ -79,26 +86,30 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def toString = "always"
   }
 
-  case class Succeed[R](ress: Results[R]) extends NullaryPrintable("ε") with Parser[R] { p =>
+  case class Succeed[R](ress: Results[R])
+      extends NullaryPrintable("ε")
+      with Parser[R] { p =>
     override def results = ress
-    override def failed  = false
+    override def failed = false
     override def accepts = true
     override def consume = (in: Elem) => fail
     override def toString = s"ε($ress)"
     override def done: Parser[R] = this
-    override def mapResults[T](f: (=> Results[R]) => Results[T]): Parser[T] = Succeed(f(ress))
+    override def mapResults[T](f: (=> Results[R]) => Results[T]): Parser[T] =
+      Succeed(f(ress))
     override def seq[U](q: Parser[U]): Parser[R ~ U] = q mapResults { ress2 =>
       for (r <- ress; r2 <- ress2) yield (r, r2)
     }
     override def seq2[U](q: Parser[U]): Parser[U ~ R] = q mapResults { ress2 =>
       for (r <- ress; r2 <- ress2) yield (r2, r)
     }
-    override def flatMap[U](f: R => Parser[U]): Parser[U] = ress.map(f).reduce(_ alt _)
+    override def flatMap[U](f: R => Parser[U]): Parser[U] =
+      ress.map(f).reduce(_ alt _)
   }
 
   case class Accept(elem: Elem) extends Parser[Elem] {
     def results = List.empty
-    def failed  = false
+    def failed = false
     def accepts = false
     def consume = (in: Elem) =>
       if (in == elem) {
@@ -109,12 +120,15 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     lazy val name = "'" + escape(elem) + "'"
     def printNode = s"""$id [label="$name", shape=circle]"""
-    private def escape(c: Elem): String = c.toString.replace("\\", "\\\\").replace("\"", "\\\"")
+    private def escape(c: Elem): String =
+      c.toString.replace("\\", "\\\\").replace("\"", "\\\"")
   }
 
-  class AcceptIf(f: Elem => Boolean) extends NullaryPrintable("acceptIf") with Parser[Elem] {
+  class AcceptIf(f: Elem => Boolean)
+      extends NullaryPrintable("acceptIf")
+      with Parser[Elem] {
     def results = List.empty
-    def failed  = false
+    def failed = false
     def accepts = false
     def consume = (in: Elem) =>
       if (f(in)) {
@@ -124,18 +138,22 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       }
   }
 
-  class Not[R](val p: Parser[R]) extends UnaryPrintable("not", p) with Parser[Unit] {
+  class Not[R](val p: Parser[R])
+      extends UnaryPrintable("not", p)
+      with Parser[Unit] {
     def results = (if (p.results.isEmpty) List(()) else List.empty)
-    def failed  = false // we never know, this is a conservative approx.
+    def failed = false // we never know, this is a conservative approx.
     def accepts = !p.accepts
     def consume: Elem => Parser[Unit] = in => (p consume in).not
     override def not = p withResults List(())
     override def toString = s"not($p)"
   }
 
-  class Alt[R, U >: R](val p: Parser[R], val q: Parser[U]) extends BinaryPrintable("|", p, q) with Parser[U] {
+  class Alt[R, U >: R](val p: Parser[R], val q: Parser[U])
+      extends BinaryPrintable("|", p, q)
+      with Parser[U] {
     def results = (p.results ++ q.results).distinct
-    def failed  = p.failed && q.failed
+    def failed = p.failed && q.failed
     def accepts = p.accepts || q.accepts
     def consume = (in: Elem) => (p consume in) alt (q consume in)
 
@@ -144,42 +162,53 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def toString = s"($p | $q)"
   }
 
-  class Seq[R, U](val p: Parser[R], val q: Parser[U]) extends BinaryPrintable("~", p, q) with Parser[R ~ U] {
+  class Seq[R, U](val p: Parser[R], val q: Parser[U])
+      extends BinaryPrintable("~", p, q)
+      with Parser[R ~ U] {
 
-    def results = (for { r <- p.results; u <- q.results } yield (new ~(r, u))).distinct
+    def results =
+      (for { r <- p.results; u <- q.results } yield (new ~(r, u))).distinct
     // q.failed forces q, which might not terminate for grammars with
     // infinite many nonterminals, like:
     //   def foo(p) = 'a' ~ foo(p << 'a')
     // so we approximate similar to flatmap.
-    def failed  = p.failed // || q.failed
+    def failed = p.failed // || q.failed
     def accepts = p.accepts && q.accepts
-    def consume = (in: Elem) => ((p consume in) seq q) alt (p.done seq (q consume in))
+    def consume = (in: Elem) =>
+      ((p consume in) seq q) alt (p.done seq (q consume in))
     override def toString = s"($p ~ $q)"
 
     // canonicalization rule (1) from PLDI 2016
     override def seq[T](r: Parser[T]): Parser[(R ~ U) ~ T] =
-      (p seq (q seq r)) map {
-        case (rr ~ (ru ~ rt)) => ((rr, ru), rt)
-    }
+      (p seq (q seq r)) map { case (rr ~ (ru ~ rt)) =>
+        ((rr, ru), rt)
+      }
   }
 
-  class Done[R](val p: Parser[R]) extends UnaryPrintable(s"done", p) with Parser[R] {
+  class Done[R](val p: Parser[R])
+      extends UnaryPrintable(s"done", p)
+      with Parser[R] {
     def results = p.results
-    def failed  = p.failed
+    def failed = p.failed
     def accepts = p.accepts
     def consume = (el: Elem) => fail
     override def done = this
     override def toString = s"done($p)"
   }
 
-  class MapResults[R, U](val p: Parser[R], f: (=> Results[R]) => Results[U]) extends UnaryPrintable(s"mapResults", p) with Parser[U] {
+  class MapResults[R, U](val p: Parser[R], f: (=> Results[R]) => Results[U])
+      extends UnaryPrintable(s"mapResults", p)
+      with Parser[U] {
     // preserve whether p actually has results (f might ignore its argument...)
     def results = if (p.results.isEmpty) List() else f(p.results).distinct
-    def failed  = p.failed
+    def failed = p.failed
     def accepts = p.accepts
     def consume = (el: Elem) => (p consume el) mapResults f
-    override def mapResults[T](g: (=> Results[U]) => Results[T]): Parser[T] = p mapResults { res => g(f(res)) }
-    override def map[T](g: U => T): Parser[T] = p mapResults { res => f(res) map g }
+    override def mapResults[T](g: (=> Results[U]) => Results[T]): Parser[T] =
+      p mapResults { res => g(f(res)) }
+    override def map[T](g: U => T): Parser[T] = p mapResults { res =>
+      f(res) map g
+    }
     override def done = p.done mapResults f
 
     // we can forget the results here.
@@ -189,36 +218,42 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // canonicalization rule (2) from PLDI 2016
     // allows for instance rewriting (always.map(f) & p) -> p.map(...f...)
     override def seq[S](q: Parser[S]): Parser[U ~ S] =
-      (p seq q).mapResults(rss => rss.unzip match {
-        case (us, ss) => f(us) zip ss
-      })
+      (p seq q).mapResults(rss =>
+        rss.unzip match { case (us, ss) => f(us) zip ss }
+      )
     override def seq2[S](q: Parser[S]): Parser[S ~ U] =
-      (p seq2 q).mapResults(rss => rss.unzip match {
-        case (ss, us) => ss zip f(us)
-      })
+      (p seq2 q).mapResults(rss =>
+        rss.unzip match { case (ss, us) => ss zip f(us) }
+      )
     override def and[S](q: Parser[S]): Parser[(U, S)] =
-      (p and q).mapResults(rss => rss.unzip match {
-        case (us, ss) => f(us) zip ss
-      })
+      (p and q).mapResults(rss =>
+        rss.unzip match { case (us, ss) => f(us) zip ss }
+      )
     override def and2[S](q: Parser[S]): Parser[(S, U)] =
-      (p and2 q).mapResults(rss => rss.unzip match {
-        case (ss, us) => ss zip f(us)
-      })
+      (p and2 q).mapResults(rss =>
+        rss.unzip match { case (ss, us) => ss zip f(us) }
+      )
   }
 
-  class And[R, U](val p: Parser[R], val q: Parser[U]) extends BinaryPrintable("&", p, q) with Parser[(R, U)] {
-    def results = (for { r <- p.results; u <- q.results } yield ((r, u))).distinct
-    def failed  = p.failed || q.failed
+  class And[R, U](val p: Parser[R], val q: Parser[U])
+      extends BinaryPrintable("&", p, q)
+      with Parser[(R, U)] {
+    def results =
+      (for { r <- p.results; u <- q.results } yield ((r, u))).distinct
+    def failed = p.failed || q.failed
     def accepts = p.accepts && q.accepts
     def consume = (in: Elem) => (p consume in) and (q consume in)
     override def not = p.not alt q.not
     override def toString = s"($p & $q)"
   }
 
-  class FlatMap[R, U](val p: Parser[R], f: R => Parser[U]) extends UnaryPrintable("flatMap", p) with Parser[U] {
-    def results = ((p.results map f) flatMap (_.results)).distinct //res().distinct
+  class FlatMap[R, U](val p: Parser[R], f: R => Parser[U])
+      extends UnaryPrintable("flatMap", p)
+      with Parser[U] {
+    def results =
+      ((p.results map f) flatMap (_.results)).distinct // res().distinct
     def accepts = !results.isEmpty
-    def failed  = p.failed // that's the best we know
+    def failed = p.failed // that's the best we know
 
     def consume: Elem => Parser[U] = in => {
       val next = (p consume in) flatMap f
@@ -228,49 +263,50 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def toString = "flatMap"
   }
 
-  class Nonterminal[+R](_p: => Parser[R]) extends Parser[R] {
+  class Nonterminal[R](_p: => Parser[R]) extends Parser[R] {
     lazy val p = _p
 
-    def accepts: Boolean    = propertiesFix.nullable.value
-    def failed: Boolean     = propertiesFix.empty.value
+    def accepts: Boolean = propertiesFix.nullable.value
+    def failed: Boolean = propertiesFix.empty.value
     def results: Results[R] = resultsFix.results.value
 
     // This separation into two fixed points is essential to
     // prevent excessive recomputation.
-    protected[this] object propertiesFix extends Attributed {
-      object nullable extends Attribute[Boolean](false,_ || _,implies)
-      object empty extends Attribute[Boolean](true,_ && _,follows)
+    protected object propertiesFix extends Attributed {
+      object nullable extends Attribute[Boolean](false, _ || _, implies)
+      object empty extends Attribute[Boolean](true, _ && _, follows)
 
-      empty       := p.failed
-      nullable    := p.accepts
+      empty := p.failed
+      nullable := p.accepts
 
-      override protected[this] def updateAttributes() {
+      override protected def updateAttributes() = {
         empty.update()
         nullable.update()
       }
     }
 
-    protected[this] object resultsFix extends Attributed {
-      object results extends Attribute[List[R]](
-        List.empty,
-        (nw, ol) => (nw ++ ol).distinct,
-        (nw, ol) => nw.toSet.subsetOf(ol.toSet))
+    protected object resultsFix extends Attributed {
+      object results
+          extends Attribute[List[R]](
+            List.empty,
+            (nw, ol) => (nw ++ ol).distinct,
+            (nw, ol) => nw.toSet.subsetOf(ol.toSet)
+          )
 
       results := p.results
 
-      override protected[this] def updateAttributes() {
-        results.update()
-      }
+      override protected def updateAttributes() = results.update()
     }
 
-    private[this] val cache: mutable.ListMap[Elem, Parser[R]] = mutable.ListMap.empty
+    private val cache: mutable.ListMap[Elem, Parser[R]] = mutable.ListMap.empty
     // Wrapping in `nonterminal` is cecessary for left-recursive
     // grammars and for grammars like "DerivativeParsers / preprocessor"
     // that recursively derive. Optimizing the nonterminal node away causes
     // divergence on these grammars. Worse, in the latter case
     // forcing `next` will already cause divergence.
     override def consume: Elem => Parser[R] = el =>
-      cache.getOrElseUpdate(el,
+      cache.getOrElseUpdate(
+        el,
         if (p.failed)
           fail
         else
@@ -321,11 +357,14 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   def done[T](p: Parser[T]): Parser[T] = p.done
 
-  override def nonterminal[R](_p: => Parser[R]): Nonterminal[R] = new Nonterminal(_p)
-  def nonterminal[R](name: String)(_p: => Parser[R]): Nonterminal[R] = new Nonterminal(_p).named(name)
+  override def nonterminal[R](_p: => Parser[R]): Nonterminal[R] =
+    new Nonterminal(_p)
+  def nonterminal[R](name: String)(_p: => Parser[R]): Nonterminal[R] =
+    new Nonterminal(_p).named(name)
 
   def feed[R](p: Parser[R], in: Elem) = p.consume(in)
-  def parse[R](p: Parser[R], in: Iterable[Elem]): Results[R] = feedAll(p, in).results
+  def parse[R](p: Parser[R], in: Iterable[Elem]): Results[R] =
+    feedAll(p, in).results
 
   // for testing
   override def isSuccess[R](p: Parser[R]): Boolean = p.accepts
