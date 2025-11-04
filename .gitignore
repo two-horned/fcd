@@ -1,6 +1,7 @@
 # Scala
 *.class
 *.log
+.scalafmt.conf
 
 # Mac
 .DS_Store
