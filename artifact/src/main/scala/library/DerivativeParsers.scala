@@ -16,19 +16,19 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def accepts: Boolean
     def failed: Boolean
 
-    def alt[U >: R](q: Parser[U]): Parser[U] = Alt(p, q)
-    def and[U](q: Parser[U]): Parser[(R, U)] = And(p, q)
-    def seq[U](q: Parser[U]): Parser[(R, U)] = new Seq(p, q)
-    def flatMap[U](f: R => Parser[U]): Parser[U] = FlatMap(p, f)
+    infix def alt[U >: R](q: Parser[U]): Parser[U] = Alt(p, q)
+    infix def and[U](q: Parser[U]): Parser[(R, U)] = And(p, q)
+    infix def seq[U](q: Parser[U]): Parser[(R, U)] = new Seq(p, q)
+    infix def flatMap[U](f: R => Parser[U]): Parser[U] = FlatMap(p, f)
     def done: Parser[R] = if (accepts) Succeed(p.results) else fail
 
     def not: Parser[Unit] = Not(p)
 
     // the map family
-    def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] =
+    infix def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] =
       MapResults(p, f)
-    def map[U](f: R => U): Parser[U] = p mapResults { ress => ress map f }
-    def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
+    infix def map[U](f: R => U): Parser[U] = p mapResults { ress => ress map f }
+    infix def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
 
     // for optimization of biased choice
     def prefix: Parser[Unit] = {
