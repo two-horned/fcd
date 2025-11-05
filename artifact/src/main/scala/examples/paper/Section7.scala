@@ -1,5 +1,7 @@
 package fcd
 
+import scala.language.implicitConversions
+
 /**
  * Section 7 - Implementation
  * ==========================

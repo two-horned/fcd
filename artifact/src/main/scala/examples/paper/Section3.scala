@@ -1,5 +1,7 @@
 package fcd
 
+import scala.language.implicitConversions
+
 /**
  * Section 3 - First-class Derivatives: Gaining
  * Fine Grained Control over the Input Stream
