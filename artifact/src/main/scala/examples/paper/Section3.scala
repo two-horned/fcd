@@ -32,7 +32,7 @@ package fcd
  */
 
 
-trait Section3 { self: RichParsers =>
+trait Section3 extends RichParsers {
   /**
    * Section 3.2 First-Class Derivatives
    */

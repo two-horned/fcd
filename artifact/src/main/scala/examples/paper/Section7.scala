@@ -17,14 +17,8 @@ package fcd
  * derivative based parsing as described by Matt Might et al, translated to an
  * object oriented setting.
  */
-trait Section7 extends ParserUsage {
 
-  // Require a library implementation that also supports the derived combinators
-  type Parsers <: RichParsers
-
-  // import all symbols from the library
-  import parsers._
-
+trait Section7 extends RichParsers {
   /**
    * Section 7.1, introduces the concrete type of a parser as
    *
