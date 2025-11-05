@@ -34,7 +34,7 @@ import scala.language.implicitConversions
  */
 
 
-trait Section3 extends RichParsers {
+trait Section3 { self: RichParsers =>
   /**
    * Section 3.2 First-Class Derivatives
    */

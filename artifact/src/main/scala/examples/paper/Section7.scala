@@ -20,7 +20,7 @@ import scala.language.implicitConversions
  * object oriented setting.
  */
 
-trait Section7 extends RichParsers {
+trait Section7 { self: RichParsers =>
   /**
    * Section 7.1, introduces the concrete type of a parser as
    *
