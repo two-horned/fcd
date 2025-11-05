@@ -21,8 +21,8 @@ trait Parsers {
   def succeed[R](res: R): Parser[R]
   def acceptIf(cond: Elem => Boolean): Parser[Elem]
 
-  def map[R, U](p: Parser[R], f: R => U): Parser[U]
-  def flatMap[R, U](p: Parser[R], f: R => Parser[U]): Parser[U]
+  infix def map[R, U](p: Parser[R], f: R => U): Parser[U]
+  infix def flatMap[R, U](p: Parser[R], f: R => Parser[U]): Parser[U]
   def alt[R, U >: R](p: Parser[R], q: Parser[U]): Parser[U]
   def and[R, U](p: Parser[R], q: Parser[U]): Parser[(R, U)]
   def seq[R, U](p: Parser[R], q: Parser[U]): Parser[(R, U)]
@@ -47,12 +47,3 @@ trait Parsers {
 }
 
 trait RichParsers extends Parsers, Syntax, DerivedOps, CharSyntax
-
-// A trait to bake parsers in a nested cake
-trait ParserUsage {
-  // Override _parsers in concrete tests suites with the
-  // appropriate parser implementation.
-  type Parsers
-  def _parsers: Parsers
-  lazy val parsers: Parsers = _parsers
-}

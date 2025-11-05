@@ -31,14 +31,8 @@ package fcd
  * instantiated to an object `paper` in `Paper.scala`.
  */
 
-trait Section3 extends ParserUsage {
 
-  // Require a library implementation that also supports the derived combinators
-  type Parsers <: RichParsers
-
-  // import all symbols from the library
-  import parsers._
-
+trait Section3 { self: RichParsers =>
   /**
    * Section 3.2 First-Class Derivatives
    */
@@ -141,7 +135,7 @@ trait Section3 extends ParserUsage {
     // one can use the following parser as kind of "mock-parser"
     //
     // It will accept all words and return the input stream it has processed.
-    val collect = consumed(many(any)) map (_.mkString)
+    val collect = consumed(many(any)) ^^ (cs => cs.mkString)
 
     // for instance, you can try the following in the REPL
     //
