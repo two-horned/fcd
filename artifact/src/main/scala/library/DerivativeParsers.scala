@@ -16,12 +16,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def accepts: Boolean
     def failed: Boolean
 
-    def alt[U >: R](q: Parser[U]): Parser[U] = q alt2 p
-    def alt2[U >: R](q: Parser[U]): Parser[U] = Alt(q, p)
-    def and[U](q: Parser[U]): Parser[(R, U)] = q and2 p
-    def and2[U](q: Parser[U]): Parser[(U, R)] = And(q, p)
-    def seq[U](q: Parser[U]): Parser[R ~ U] = q seq2 p
-    def seq2[U](q: Parser[U]): Parser[U ~ R] = new Seq(q, p)
+    def alt[U >: R](q: Parser[U]): Parser[U] = Alt(p, q)
+    def and[U](q: Parser[U]): Parser[(R, U)] = And(p, q)
+    def seq[U](q: Parser[U]): Parser[(R, U)] = new Seq(p, q)
     def flatMap[U](f: R => Parser[U]): Parser[U] = FlatMap(p, f)
     def done: Parser[R] = if (accepts) Succeed(p.results) else fail
 
@@ -50,11 +47,8 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def consume: Elem => this.type = in => this
 
     override def alt[U >: Nothing](q: Parser[U]): q.type = q
-    override def alt2[U >: Nothing](q: Parser[U]): q.type = q
     override def seq[U](q: Parser[U]): this.type = this
-    override def seq2[U](q: Parser[U]): this.type = this
     override def and[U](q: Parser[U]): this.type = this
-    override def and2[U](q: Parser[U]): this.type = this
     override def map[U](f: Nothing => U): this.type = this
     override def flatMap[U](g: Nothing => Parser[U]): this.type = this
     override def mapResults[U](
@@ -76,13 +70,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def and[U](q: Parser[U]): Parser[(Unit, U)] = q map { r =>
       ((), r)
     }
-    override def and2[U](q: Parser[U]): Parser[(U, Unit)] = q map { r =>
-      (r, ())
-    }
 
     // this is a valid optimization, however it almost never occurs.
     override def alt[U >: Unit](q: Parser[U]) = this
-    override def alt2[U >: Unit](q: Parser[U]) = this
     override def toString = "always"
   }
 
@@ -99,9 +89,6 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       Succeed(f(ress))
     override def seq[U](q: Parser[U]): Parser[R ~ U] = q mapResults { ress2 =>
       for (r <- ress; r2 <- ress2) yield (r, r2)
-    }
-    override def seq2[U](q: Parser[U]): Parser[U ~ R] = q mapResults { ress2 =>
-      for (r <- ress; r2 <- ress2) yield (r2, r)
     }
     override def flatMap[U](f: R => Parser[U]): Parser[U] =
       ress.map(f).reduce(_ alt _)
@@ -221,17 +208,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       (p seq q).mapResults(rss =>
         rss.unzip match { case (us, ss) => f(us) zip ss }
       )
-    override def seq2[S](q: Parser[S]): Parser[S ~ U] =
-      (p seq2 q).mapResults(rss =>
-        rss.unzip match { case (ss, us) => ss zip f(us) }
-      )
     override def and[S](q: Parser[S]): Parser[(U, S)] =
       (p and q).mapResults(rss =>
         rss.unzip match { case (us, ss) => f(us) zip ss }
-      )
-    override def and2[S](q: Parser[S]): Parser[(S, U)] =
-      (p and2 q).mapResults(rss =>
-        rss.unzip match { case (ss, us) => ss zip f(us) }
       )
   }
 
