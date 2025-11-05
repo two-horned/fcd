@@ -10,17 +10,17 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   def acceptSeq(es: Iterable[Elem]): Parser[List[Elem]] =
     es.foldRight[Parser[List[Elem]]](succeed(Nil)) { (x, pxs) =>
-      accept(x) ~ pxs map mkList
+      accept(x) ~ pxs ^^ mkList
     }
 
   def some[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) map { case p ~ ps => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case p ~ ps => p :: ps }
     some_v
   }
   def many[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) map { case p ~ ps => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case p ~ ps => p :: ps }
     many_v
   }
 
@@ -37,16 +37,16 @@ trait DerivedOps { self: Parsers & Syntax =>
     t => s.forall(_ != t)
   }
 
-  def opt[T](p: Parser[T]): Parser[Option[T]] = alt(p map { r => Some(r) }, succeed(None))
+  def opt[T](p: Parser[T]): Parser[Option[T]] = alt(p ^^ { r => Some(r) }, succeed(None))
 
   def manyN[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
-    else p ~ manyN(n - 1, p) map { case r ~ rs => r :: rs }
+    else p ~ manyN(n - 1, p) ^^ { case r ~ rs => r :: rs }
   }
 
   def atMost[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
-    else (p ~ atMost(n - 1, p) map { case r ~ rs => r :: rs }) | succeed(Nil)
+    else (p ~ atMost(n - 1, p) ^^ { case r ~ rs => r :: rs }) | succeed(Nil)
   }
 
   def manySep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
@@ -56,21 +56,21 @@ trait DerivedOps { self: Parsers & Syntax =>
   // same optimization as above for many and some
   def someSep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(sep ~> some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) map { case p ~ ps => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case p ~ ps => p :: ps }
     some_v
   }
 
-  def manyCount(p: Parser[Any]): Parser[Int] = many(p) map { _.size }
-  def someCount(p: Parser[Any]): Parser[Int] = some(p) map { _.size }
+  def manyCount(p: Parser[Any]): Parser[Int] = many(p) ^^ { _.size }
+  def someCount(p: Parser[Any]): Parser[Int] = some(p) ^^ { _.size }
 
   // distributive law - chains a list of parsers
   // --> in Haskell one would use `traverse`
   def distr[T](ps: List[Parser[T]]): Parser[List[T]] =
     ps.foldRight(succeed[List[T]](Nil)) { (p, l) =>
-      (p ~ l) map { case a ~ b => a :: b }
+      (p ~ l) ^^ { case a ~ b => a :: b }
     }
 
-  def join[T](p: Parser[Parser[T]]): Parser[T] = p flatMap done
+  def join[T](p: Parser[Parser[T]]): Parser[T] = p >> done
 
   // A parser that captures the tokens consumed by `p`
   def consumed[T](p: Parser[T]): Parser[List[Elem]] =
@@ -88,7 +88,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   // collects the results of parsers
   def collect[T](ps: List[Parser[T]]): Parser[List[T]] =
     ps.foldRight(succeed[List[T]](Nil)) { (p, l) =>
-      done(p) >> { r => l.map(r :: _) }
+      done(p) >> { r => l ^^ (r :: _) }
     }
 
   def includes[T](p: Parser[T]): Parser[T] =

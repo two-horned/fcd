@@ -20,7 +20,7 @@ trait CharSyntax { self: Parsers & DerivedOps & Syntax =>
 
   val asciiLetter = charRange('a', 'z') | charRange('A', 'Z')
 
-  def string(s: String): Parser[String] = (acceptSeq(s) map (_.mkString))
+  def string(s: String): Parser[String] = acceptSeq(s) ^^ (_.mkString)
 
   sealed trait Stringable[T] { def apply: T => String }
 
@@ -36,10 +36,8 @@ trait CharSyntax { self: Parsers & DerivedOps & Syntax =>
   given Conversion[String, Parser[String]] = string
   given Conversion[List[Char], String] = _.mkString
 
-  given [T](using st: Stringable[T]): Conversion[Parser[T], Parser[String]]
-  with {
-    def apply(p: Parser[T]) = p map st.apply
-  }
+  given [T](using st: Stringable[T]): Conversion[Parser[T], Parser[String]] =
+    p => p ^^ st.apply
 
   given Conversion[Char, Parser[Char]] = accept
 
