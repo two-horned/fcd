@@ -9,8 +9,8 @@ trait Syntax { self: Parsers & DerivedOps =>
     def <<<(in: Seq[Elem]): Parser[R] = self.feedAll(p, in)
     def parse(s: Seq[Elem]) = self.parse(p, s)
 
-    def map[U](f: R => U): Parser[U] = self.map(p, f)
-    def flatMap[U](f: R => Parser[U]): Parser[U] = self.flatMap(p, f)
+    infix def map[U](f: R => U): Parser[U] = self.map(p, f)
+    infix def flatMap[U](f: R => Parser[U]): Parser[U] = self.flatMap(p, f)
 
     def ~[U](q: Parser[U]) = seq(p, q)
     def ~>[U](q: Parser[U]) = seq(p, q) map { case (a, b) => b }
@@ -44,9 +44,6 @@ trait Syntax { self: Parsers & DerivedOps =>
   implicit def toParser[R](nt: NT[R]): Parser[R] = nt.parser
   implicit def toNT[R](parser: => Parser[R]): NT[R] = NT(nonterminal(parser))
 
-  implicit def tupleSeq2[T1, T2, O](f: (T1, T2) => O): (T1 ~ T2) => O = {
-    case t1 ~ t2 => f(t1, t2)
-  }
   implicit def tupleSeq3[T1, T2, T3, O](f: (T1, T2, T3) => O): (T1 ~ T2 ~ T3) => O = {
     case t1 ~ t2 ~ t3 => f(t1, t2, t3)
   }
