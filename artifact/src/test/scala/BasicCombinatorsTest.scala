@@ -5,9 +5,10 @@ import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-trait BasicCombinatorTests extends CustomMatchers { self: AnyFunSpec & Matchers =>
+trait BasicCombinatorTests extends CustomMatchers {
+  self: AnyFunSpec & Matchers =>
 
-  import parsers._
+  import parsers.{succeed as succ, *}
 
   describe("parser \"abc\"") {
     val p = 'a' ~ 'b' ~ 'c'
@@ -26,7 +27,7 @@ trait BasicCombinatorTests extends CustomMatchers { self: AnyFunSpec & Matchers 
   }
 
   describe("parser \"baaa | ba\"") {
-    val p: Parser[_] = ('b' ~ 'a' ~ 'a' ~ 'a') | 'b' ~ 'a'
+    val p = ('b' ~ 'a' ~ 'a' ~ 'a') | 'b' ~ 'a'
     p `shouldParse` "baaa"
     p `shouldParse` "ba"
     ((p ~ 'c' ~ 'o') | (p ~ 'c')) `shouldParse` "bac"
@@ -34,29 +35,29 @@ trait BasicCombinatorTests extends CustomMatchers { self: AnyFunSpec & Matchers 
   }
 
   describe("parser \"(baaa | ba) aa\"") {
-    val p: Parser[_] = ("baaa" | "ba") ~ "aa"
+    val p = ("baaa" | "ba") ~ "aa"
     p `shouldParse` "baaaaa"
     p `shouldParse` "baaa"
   }
 
-  describe("parser \"succeed(a) b\"") {
-    val p = succeed('a') ~ 'b'
+  describe("parser \"succ(a) b\"") {
+    val p = succ('a') ~ 'b'
     p `shouldParse` "b"
     p `shouldNotParse` ""
   }
 
-  describe("parser \"succeed(a) succeed(b)\"") {
-    val p = succeed('a') ~ succeed('b')
+  describe("parser \"succ(a) succ(b)\"") {
+    val p = succ('a') ~ succ('b')
     p `shouldParse` ""
   }
 
-  describe("parser \"succeed(a) | succeed(b)\"") {
-    val p = succeed('a') | succeed('b')
+  describe("parser \"succ(a) | succ(b)\"") {
+    val p = succ('a') | succ('b')
     p `shouldParse` ""
   }
 
   describe("parser \"(a a a | a a)+") {
-    val p: Parser[_] = 'a' ~ 'a' ~ 'a' | 'a' ~ 'a'
+    val p = 'a' ~ 'a' ~ 'a' | 'a' ~ 'a'
     describe("some(_)") { some(p) `shouldParse` "aaaa" }
     describe("_ ~ 'b'") { (p ~ 'b') `shouldParse` "aaab" }
     describe("some(_) ~ 'b'") {
@@ -73,7 +74,7 @@ trait BasicCombinatorTests extends CustomMatchers { self: AnyFunSpec & Matchers 
   describe("parser \"'a'+\"") {
     val p = some('a')
 
-    val largeInput = "a" * 100
+    val largeInput = List.fill(100)('a').mkString
 
     p `shouldParse` "a"
     p `shouldParse` "aaaaaa"

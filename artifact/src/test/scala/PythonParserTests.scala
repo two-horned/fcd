@@ -6,9 +6,8 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class PythonParserTests extends AnyFunSpec with Matchers {
-
-  val parsers = PythonParsers
-  import parsers._
+  import PythonParsers._
+  import Lexeme._
 
   describe("indented python parser (lexeme based)") {
     indented(many(many(Id("A")) <~ NL)) `shouldParseWith` (List(
@@ -27,8 +26,8 @@ class PythonParserTests extends AnyFunSpec with Matchers {
 
   describe("implicit line joining") {
 
-    implicit def keyword(kw: Symbol): Lexeme = KW(kw.name)
-    implicit def punctuation(p: String): Lexeme = Punct(p)
+    given keyword: Conversion[Symbol, Lexeme] = kw => KW(kw.name)
+    given punctuation: Conversion[String, Lexeme] = p => Punct(p)
 
     val p = many(WS | id | "(" | ")" | "[" | "]")
     val a = Id("A")
@@ -183,7 +182,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       a,
       "=",
       "yield",
-      'from,
+      "from",
       a,
       "=",
       a,
@@ -236,9 +235,9 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       EOS
     )
 
-    (stripComments(collect) parse sampleProg) `shouldBe` List(sampleProg)
-    (explicitJoin(collect) parse sampleProg) `shouldBe` List(sampleProg)
-    (implicitJoin(collect) parse sampleProg) `shouldBe` List(sampleProg)
+    (stripComments(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
+    (explicitJoin(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
+    (implicitJoin(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
 
     preprocess(file_input) `shouldParse` sampleProg
 
@@ -274,7 +273,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       EOS
     )
 
-    (preprocess(collect) parse sampleProg2) `shouldBe` List(sampleProg)
+    (preprocess(collect) `parse` sampleProg2) `shouldBe` List(sampleProg)
 
     preprocess(file_input) `shouldParse` sampleProg2
 
@@ -572,11 +571,11 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     )
 
     // TODO is already ambiguous
-    // (stmt parse List[Lexeme](Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL)).size `shouldBe` 1
+    // (stmt `parse` List[Lexeme](Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL)).size `shouldBe` 1
 
     // preprocess(file_input) `shouldParse` traceProg
 
-    // (stmt parse List[Lexeme](
+    // (stmt `parse` List[Lexeme](
     //     "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
     //     WS, WS, Id("print"), NL)).size `shouldBe` 1
 
@@ -808,9 +807,9 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     )
 
     preprocess(file_input) `shouldParse` traceProg2
-    (preprocess(file_input) parse traceProg2).size `shouldBe` 1
+    (preprocess(file_input) `parse` traceProg2).size `shouldBe` 1
 
-    // suite should parse this:
+    // suite should `parse` this:
     val dummyin = List[Lexeme](
       NL,
       WS,
@@ -847,7 +846,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       NL
     )
 
-    // println((suite parse dummyin) mkString "\n\n")
+    // println((suite `parse` dummyin) mkString "\n\n")
 
     stmt `shouldNotParse` List[Lexeme](WS, WS, WS, Id("i"), NL)
     atom `shouldNotParse` List[Lexeme](WS, WS, WS, Id("i"))
@@ -996,8 +995,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     (aInput `parse` dummyin2).size `shouldBe` 1
   }
 
-  // Helpers to allow writing more concise tests.
-  private implicit class ParserTests[T](p: => Parser[T]) {
+  extension [T](p: => Parser[T]) {
     def shouldParse(s: Iterable[Elem], tags: Tag*) =
       it(s"""should parse "$s" """, tags*) {
         accepts(p, s) `shouldBe` true

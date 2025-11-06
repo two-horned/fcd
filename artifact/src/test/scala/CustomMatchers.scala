@@ -15,16 +15,21 @@ trait CustomMatchers { self: AnyFunSpec & Matchers =>
   type Parsers = RichParsers
   def _parsers: RichParsers
   lazy val parsers = _parsers
-  import parsers.{ Results, isSuccess, Parser, accepts, Elem }
+  import parsers.{Results, isSuccess, Parser, accepts, Elem}
 
-  implicit class ParserTests[T](p: => Parser[T]) {
+  extension [T](p: => Parser[T]) {
     def shouldParse(s: Iterable[Elem], tags: Tag*) =
-      it (s"""should parse "$s" """, tags*) {
+      it(s"""should parse "$s" """, tags*) {
         accepts(p, s) `shouldBe` true
       }
     def shouldNotParse(s: Iterable[Elem], tags: Tag*) =
-      it (s"""should not parse "$s" """, tags*) {
+      it(s"""should not parse "$s" """, tags*) {
         accepts(p, s) `shouldBe` false
+      }
+    // for unambiguous parses
+    def shouldParseWith(s: Iterable[Elem], result: T) =
+      it(s"""should parse "$s" with correct result""") {
+        parse(p, s) `shouldBe` List(result)
       }
   }
 
@@ -37,5 +42,5 @@ trait CustomMatchers { self: AnyFunSpec & Matchers =>
       )
   }
   lazy val successful = new SuccessMatcher
-  lazy val failure = not (successful)
+  lazy val failure = not(successful)
 }

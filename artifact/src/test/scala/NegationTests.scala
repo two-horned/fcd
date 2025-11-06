@@ -7,8 +7,7 @@ import org.scalatest.matchers.should.Matchers
 
 trait NegationTests extends CustomMatchers { self: AnyFunSpec & Matchers =>
 
-  import parsers._
-  import parsers.{ not => neg }
+  import parsers.{ not => neg, * }
 
   describe("parser \"not(aa)\"") {
     val p = neg("aa")
