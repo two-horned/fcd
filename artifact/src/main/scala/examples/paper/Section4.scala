@@ -142,7 +142,9 @@ trait Section4 { self: Section3 & RichParsers =>
 
     // given a layout, creates a parser for row separators
     def rowSeparator(layout: Layout): Parser[Any] =
-      layout.map { n => ("-" * n) + "+" }.foldLeft("+")(_ + _) ~ lineEnd
+      layout
+        .map { n => List.fill(n)('-').mkString + "+" }
+        .foldLeft("+")(_ + _) ~ lineEnd
 
     // either read another rowLine or quit cell parsers and collect results
     def rowLine[T](layout: Layout, cells: List[Parser[T]]): Parser[List[T]] =
@@ -157,7 +159,7 @@ trait Section4 { self: Section3 & RichParsers =>
         cells: List[Parser[T]]
     ): List[Parser[Parser[T]]] =
       layout.zip(cells).map { case (n, p) =>
-        delegateN(n, p).map(_ << '\n') <~ '|'
+        map(delegateN(n, p), (_ << '\n')) <~ '|'
       }
 
     // We can use the table combinator recursively to parse nested tables.
