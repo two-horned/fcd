@@ -2,9 +2,10 @@ package fcd
 
 import scala.language.implicitConversions
 
-/** Additional Case Study: Python Parser \====================================
+/** Additional Case Study: Python Parser
+  *
   * This file contains an additional python parser implementation to support the
-  * claims in our paper:
+  * claims in our paper.
   *
   * Brachthäuser, Rendel, Ostermann. Parsing with First-Class Derivatives
   * Submitted to OOPSLA 2016.
