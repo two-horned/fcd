@@ -277,7 +277,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       override protected def updateAttributes() = results.update()
     }
 
-    private val cache: mutable.ListMap[Elem, Parser[R]] = mutable.ListMap.empty
+    private val cache: mutable.HashMap[Elem, Parser[R]] = mutable.HashMap.empty
     // Wrapping in `nonterminal` is cecessary for left-recursive
     // grammars and for grammars like "DerivativeParsers / preprocessor"
     // that recursively derive. Optimizing the nonterminal node away causes
