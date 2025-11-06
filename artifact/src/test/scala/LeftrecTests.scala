@@ -227,10 +227,12 @@ trait LeftrecTests extends CustomMatchers {
     }
 
     describe("terms") {
+      enum Term {
+        case BinOp(lhs: Term, op: String, rhs: Term)
+        case Num(n: Int)
+      }
 
-      trait Term
-      case class BinOp(lhs: Term, op: String, rhs: Term) extends Term
-      case class Num(n: Int) extends Term
+      import Term._
 
       lazy val term: NT[Term] =
         (term ~ "+" ~ fact ^^ { case l ~ op ~ r => BinOp(l, op, r) }
