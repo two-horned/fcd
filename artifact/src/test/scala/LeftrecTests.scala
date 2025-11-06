@@ -142,7 +142,7 @@ trait LeftrecTests extends CustomMatchers {
     // should parse at most as many 'd's as it parses 'b's.
     describe("A = B ~ A ~ b | c\n  B = d | empty") {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
-      lazy val B: NT[?] = charParser('d') | succeed("done")
+      lazy val B: NT[?] = 'd' | succeed("done")
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
@@ -253,7 +253,8 @@ trait LeftrecTests extends CustomMatchers {
     describe("balanced smileys") {
       lazy val az: NT[Any] = acceptIf(c => c >= 'a' && c <= 'z')
       lazy val S: NT[Any] = many(az | ' ' | ':' | ':' ~ P | '(' ~ S ~ ')')
-      lazy val P: NT[Any] = charParser('(') | ')'
+      val tmp: Parser[Char] = '('
+      lazy val P: NT[Any] = tmp | ')'
 
       S `shouldParse` ""
       S `shouldNotParse` ":(("
@@ -300,7 +301,7 @@ trait LeftrecTests extends CustomMatchers {
     describe("grammar with hidden left recursion") {
       lazy val S: NT[Any] = C ~ 'a' | 'd'
       lazy val B: NT[Any] = succeed(()) | 'a'
-      lazy val C: NT[Any] = charParser('b') | B ~ C ~ 'b' | 'b' ~ 'b'
+      lazy val C: NT[Any] = 'b' | B ~ C ~ 'b' | 'b' ~ 'b'
 
       S `shouldNotParse` ""
       S `shouldNotParse` "aba"
