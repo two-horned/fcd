@@ -137,7 +137,7 @@ trait Section3 { self: RichParsers =>
     // one can use the following parser as kind of "mock-parser"
     //
     // It will accept all words and return the input stream it has processed.
-    val collect = consumed(many(any)) ^^ (cs => cs.mkString)
+    val collect = consumed(many(any)) ^^ { _.mkString }
 
     // for instance, you can try the following in the REPL
     //
