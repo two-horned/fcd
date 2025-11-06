@@ -1,25 +1,28 @@
 package fcd
 package test
-import org.scalatest._
 
-trait LeftrecTests extends CustomMatchers { self: FunSpec & Matchers =>
+import scala.language.implicitConversions
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
+trait LeftrecTests extends CustomMatchers { self: AnyFunSpec & Matchers =>
 
   import parsers._
 
   describe("lazyness of alt") {
 
     describe("p = p | .") {
-      lazy val p: NT[Any] = p | any
+      lazy val p = p | any
       p `shouldParse` "a"
     }
 
     describe("p = p ~ . | .") {
-      lazy val p: NT[_] = p ~ any | any
+      lazy val p: NT[?] = p ~ any | any
       p `shouldParse` "a"
     }
 
     describe("p = . | p ~ .") {
-      lazy val p: NT[_] = any | p ~ any
+      lazy val p: NT[?] = any | p ~ any
       p `shouldParse` "a"
     }
 
@@ -53,7 +56,7 @@ trait LeftrecTests extends CustomMatchers { self: FunSpec & Matchers =>
   describe("left recursion") {
 
     describe("A = A ~ a | empty") {
-      lazy val A: NT[_] = A ~ 'a' | succeed(42)
+      lazy val A: NT[?] = A ~ 'a' | succeed(42)
 
       A `shouldParse` ""
       A `shouldParse` "a"
@@ -61,7 +64,7 @@ trait LeftrecTests extends CustomMatchers { self: FunSpec & Matchers =>
     }
 
     describe("A = empty | A ~ a ") {
-      lazy val A: NT[_] = succeed(42) | A ~ 'a'
+      lazy val A: NT[?] = succeed(42) | A ~ 'a'
 
       A `shouldParse` ""
       A `shouldParse` "a"
@@ -121,7 +124,7 @@ trait LeftrecTests extends CustomMatchers { self: FunSpec & Matchers =>
     }
 
     describe("A = A ~ b | c") {
-      lazy val A: NT[_] = A ~ 'b' | 'c'
+      lazy val A: NT[?] = A ~ 'b' | 'c'
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
@@ -140,7 +143,7 @@ trait LeftrecTests extends CustomMatchers { self: FunSpec & Matchers =>
     // should parse at most as many 'd's as it parses 'b's.
     describe("A = B ~ A ~ b | c\n  B = d | empty") {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
-      lazy val B: NT[_] = charParser('d') | succeed("done")
+      lazy val B: NT[?] = charParser('d') | succeed("done")
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
