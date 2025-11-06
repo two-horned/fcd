@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 
 class DerivativeParsersTests
     extends AnyFunSpec
+    with RichParsers
+    with DerivativeParsers
     with Matchers
     with CustomMatchers
     with BasicCombinatorTests
@@ -17,27 +19,13 @@ class DerivativeParsersTests
     with Section4
     with Section7 {
 
-  def _parsers: DerivativeParsers.type = DerivativeParsers
-  override lazy val parsers: DerivativeParsers.type = _parsers
-
-  // it is necessary to rename some combinators since names are already
-  // bound by scala test.
-  import parsers.{
-    fail as err,
-    noneOf as nonOf,
-    oneOf as one,
-    not as neg,
-    succeed as succ,
-    *
-  }
-
   // This test illustrates how to write graph representations of the
   // parsers to a file. (To execute it replace `ignore` by `describe` and
   // run the tests.
   describe("printing graph representations of parsers") {
     lazy val num: Parser[Any] = many(digit)
     lazy val A: NT[Any] = B ~ '-' ~ num | num
-    lazy val B: NT[Any] = succ(()) ~ A
+    lazy val B: NT[Any] = succeed(()) ~ A
 
     A.printToFile("test.png")
   }
@@ -185,16 +173,16 @@ class DerivativeParsersTests
   }
 
   describe("flatMap uses fixed point computation") {
-    lazy val fm: NT[Int] = succ(1) | fm.flatMap { n =>
-      if (n < 5) succeed(n + 1) else err
+    lazy val fm: NT[Int] = succeed(1) | fm.flatMap { n =>
+      if (n < 5) succeed(n + 1) else fail
     }
 
     fm.results.toSet `shouldBe` Set(1, 2, 3, 4, 5)
   }
 
   describe("Stream preprocessing") {
-    lazy val ones: NT[Any] = succ(()) | '1' ~ ones
-    lazy val zeros: NT[Any] = succ(()) | '0' ~ zeros
+    lazy val ones: NT[Any] = succeed(()) | '1' ~ ones
+    lazy val zeros: NT[Any] = succeed(()) | '0' ~ zeros
 
     lazy val oneszeros: Parser[Any] = '1' ~ '1' ~ '0' ~ '0'
 
@@ -456,38 +444,38 @@ class DerivativeParsersTests
   describe("Greedy repitition") {
 
     it("should return only the result of the longest match") {
-      greedySome(some('a')) `parse` "" `shouldBe` List()
-      greedyMany(some('a')) `parse` "" `shouldBe` List(List())
-      greedySome(some('a')) `parse` "a" `shouldBe` List(List(List('a')))
-      greedySome(some('a')) `parse` "aaa" `shouldBe` List(
+      parse(greedySome(some('a')), "") `shouldBe` List()
+      parse(greedyMany(some('a')), "") `shouldBe` List(List())
+      parse(greedySome(some('a')), "a") `shouldBe` List(List(List('a')))
+      parse(greedySome(some('a')), "aaa") `shouldBe` List(
         List(List('a', 'a', 'a'))
       )
     }
 
     it("should also return longest match if other parser succed first") {
       lazy val p = some("ab") | some("a") | some("b")
-      greedySome(p) `parse` "ab" `shouldBe` List(List(List("ab")))
-      greedySome(p) `parse` "abab" `shouldBe` List(List(List("ab", "ab")))
-      greedySome(p) `parse` "abbab" `shouldBe` List(
+      parse(greedySome(p), "ab") `shouldBe` List(List(List("ab")))
+      parse(greedySome(p), "abab") `shouldBe` List(List(List("ab", "ab")))
+      parse(greedySome(p), "abbab") `shouldBe` List(
         List(List("ab"), List("b"), List("ab"))
       )
-      greedySome(p) `parse` "abbaab" `shouldBe` List(
+      parse(greedySome(p), "abbaab") `shouldBe` List(
         List(List("ab"), List("b"), List("a", "a"), List("b"))
       )
-      greedySome(p) `parse` "aaaab" `shouldBe` List(
+      parse(greedySome(p), "aaaab") `shouldBe` List(
         List(List("a", "a", "a", "a"), List("b"))
       )
 
       lazy val q = "ab" | "a" | "b"
-      greedySome(q) `parse` "ab" `shouldBe` List(List("ab"))
-      greedySome(q) `parse` "abab" `shouldBe` List(List("ab", "ab"))
-      greedySome(q) `parse` "abbab" `shouldBe` List(List("ab", "b", "ab"))
-      greedySome(q) `parse` "abbaab" `shouldBe` List(List("ab", "b", "a", "ab"))
-      greedySome(q) `parse` "aaaab" `shouldBe` List(List("a", "a", "a", "ab"))
+      parse(greedySome(q), "ab") `shouldBe` List(List("ab"))
+      parse(greedySome(q), "abab") `shouldBe` List(List("ab", "ab"))
+      parse(greedySome(q), "abbab") `shouldBe` List(List("ab", "b", "ab"))
+      parse(greedySome(q), "abbaab") `shouldBe` List(List("ab", "b", "a", "ab"))
+      parse(greedySome(q), "aaaab") `shouldBe` List(List("a", "a", "a", "ab"))
     }
 
     // This shows that our implementation is only locally greedy
-    println(greedySome("ab" | "a") ~ "b" `parse` "abab")
+    println(parse(greedySome("ab" | "a") ~ "b", "abab"))
   }
 
   describe("how to locally rewrite biased choice") {
@@ -511,7 +499,7 @@ class DerivativeParsersTests
     // If the right-hand-side `r` is locally known the parser can be
     // rewritten to:
 
-    val rewrite = p ~ r | (neg(p ~ always) &> (q ~ r))
+    val rewrite = p ~ r | (not(p ~ always) &> (q ~ r))
     rewrite `shouldNotParse` "foo"
     rewrite `shouldParse` "foooo"
     rewrite `shouldParse` "fb"
@@ -573,10 +561,11 @@ class DerivativeParsersTests
     def unmask[T] = mapInPartial[T] { case '↩' => '\n' }
 
     // some lexers
-    val singleString: Parser[String] = consumed('"' ~ many(nonOf("\"\n")) ~ '"')
-    val comment: Parser[String] = consumed('#' ~ many(nonOf("\n")) ~ '\n')
+    val singleString: Parser[String] =
+      consumed('"' ~ many(noneOf("\"\n")) ~ '"')
+    val comment: Parser[String] = consumed('#' ~ many(noneOf("\n")) ~ '\n')
     val multilineString: Parser[String] =
-      consumed("'''" ~ neg(always ~ prefix("'''")) ~ "'''")
+      consumed("'''" ~ not(always ~ prefix("'''")) ~ "'''")
 
     singleString `shouldParse` "\"hello world\""
     singleString `shouldNotParse` "\"hello\nworld\""
@@ -594,7 +583,10 @@ class DerivativeParsersTests
     )(collect)
 
     it("should only filter newlines in multiline strings") {
-      (p `parse` "hello '''foo\n\"bar''' test\n foo \" bar'''foo \"\n") `should` be(
+      parse(
+        p,
+        "hello '''foo\n\"bar''' test\n foo \" bar'''foo \"\n"
+      ) `should` be(
         List("hello '''foo\"bar''' test\n foo \" bar'''foo \"\n")
       )
     }
@@ -611,7 +603,7 @@ class DerivativeParsersTests
     val pairs = Map[Elem, Elem]('(' -> ')', '[' -> ']', '{' -> '}')
     val (opening, closing) = (pairs.keys.toList, pairs.values.toList)
 
-    lazy val dyck: NT[Any] = one(opening) >> { paren =>
+    lazy val dyck: NT[Any] = oneOf(opening) >> { paren =>
       many(dyck) ~ pairs(paren)
     }
     // '(' ~> many(dyck) <~ ')'
@@ -620,8 +612,8 @@ class DerivativeParsersTests
     val parens =
       // we need to intersect with the outermost parenthesis to prevent
       // parsing something like "aaa()aaa"
-      (one(opening) >> { paren => always ~ pairs(paren) }) &>
-        transform[Any](noText | nonOf(opening) & nonOf(closing), err, skip)(
+      (oneOf(opening) >> { paren => always ~ pairs(paren) }) &>
+        transform[Any](noText | noneOf(opening) & noneOf(closing), fail, skip)(
           dyck
         )
 
@@ -656,14 +648,20 @@ class DerivativeParsersTests
       p => ilj(elj(mlj(indented(unmask(p)))))
 
     it("should mask perform line joining before checking indentation") {
-      (joiningIndent(
-        collect
-      ) `parse` "  foo'''a \n a'''\n  bar\n  ( \n )\n") `should` be(
+      parse(
+        joiningIndent(
+          collect
+        ),
+        "  foo'''a \n a'''\n  bar\n  ( \n )\n"
+      ) `should` be(
         List("foo'''a \n a'''\nbar\n( \n )\n")
       )
-      (joiningIndent(
-        collect
-      ) `parse` "  '''some \n multiline \n'''\n  ( # comment (\n ) hello\n  test and \\\n escaped\n") `should` be(
+      parse(
+        joiningIndent(
+          collect
+        ),
+        "  '''some \n multiline \n'''\n  ( # comment (\n ) hello\n  test and \\\n escaped\n"
+      ) `should` be(
         List(
           "'''some \n multiline \n'''\n( # comment (\n ) hello\ntest and \\\n escaped\n"
         )
@@ -711,7 +709,7 @@ class DerivativeParsersTests
   describe(
     "Regression: `not` should preserve invariant `p.results.isEmpty != p.accepts`"
   ) {
-    val p = neg("a" | "b")
+    val p = not("a" | "b")
     val p_a = p <<< "a"
     val p_b = p <<< "b"
     val p_c = p <<< "c"

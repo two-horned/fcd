@@ -6,9 +6,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 trait BasicCombinatorTests extends CustomMatchers {
-  self: AnyFunSpec & Matchers =>
-
-  import parsers.{succeed as succ, *}
+  self: AnyFunSpec & Matchers & RichParsers =>
 
   describe("parser \"abc\"") {
     val p = 'a' ~ 'b' ~ 'c'
@@ -40,19 +38,19 @@ trait BasicCombinatorTests extends CustomMatchers {
     p `shouldParse` "baaa"
   }
 
-  describe("parser \"succ(a) b\"") {
-    val p = succ('a') ~ 'b'
+  describe("parser \"succeed(a) b\"") {
+    val p = succeed('a') ~ 'b'
     p `shouldParse` "b"
     p `shouldNotParse` ""
   }
 
-  describe("parser \"succ(a) succ(b)\"") {
-    val p = succ('a') ~ succ('b')
+  describe("parser \"succeed(a) succeed(b)\"") {
+    val p = succeed('a') ~ succeed('b')
     p `shouldParse` ""
   }
 
-  describe("parser \"succ(a) | succ(b)\"") {
-    val p = succ('a') | succ('b')
+  describe("parser \"succeed(a) | succeed(b)\"") {
+    val p = succeed('a') | succeed('b')
     p `shouldParse` ""
   }
 

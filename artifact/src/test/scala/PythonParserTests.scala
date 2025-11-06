@@ -4,6 +4,7 @@ package test
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.Tag
 
 class PythonParserTests extends AnyFunSpec with Matchers {
   import PythonParsers._
@@ -235,9 +236,9 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       EOS
     )
 
-    (stripComments(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
-    (explicitJoin(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
-    (implicitJoin(collect) `parse` sampleProg) `shouldBe` List(sampleProg)
+    parse(stripComments(collect), sampleProg) `shouldBe` List(sampleProg)
+    parse(explicitJoin(collect), sampleProg) `shouldBe` List(sampleProg)
+    parse(implicitJoin(collect), sampleProg) `shouldBe` List(sampleProg)
 
     preprocess(file_input) `shouldParse` sampleProg
 
@@ -273,7 +274,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
       EOS
     )
 
-    (preprocess(collect) `parse` sampleProg2) `shouldBe` List(sampleProg)
+    parse(preprocess(collect), sampleProg2) `shouldBe` List(sampleProg)
 
     preprocess(file_input) `shouldParse` sampleProg2
 
@@ -807,7 +808,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     )
 
     preprocess(file_input) `shouldParse` traceProg2
-    (preprocess(file_input) `parse` traceProg2).size `shouldBe` 1
+    parse(preprocess(file_input), traceProg2).size `shouldBe` 1
 
     // suite should `parse` this:
     val dummyin = List[Lexeme](
@@ -992,7 +993,7 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     ),
     List[Lexeme](NL, NL, a, NL))
 
-    (aInput `parse` dummyin2).size `shouldBe` 1
+    parse(aInput, dummyin2).size `shouldBe` 1
   }
 
   extension [T](p: => Parser[T]) {
