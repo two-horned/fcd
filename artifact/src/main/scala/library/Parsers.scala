@@ -21,8 +21,8 @@ trait Parsers {
   def succeed[R](res: R): Parser[R]
   def acceptIf(cond: Elem => Boolean): Parser[Elem]
 
-  infix def map[R, U](p: Parser[R], f: R => U): Parser[U]
-  infix def flatMap[R, U](p: Parser[R], f: R => Parser[U]): Parser[U]
+  def map[R, U](p: Parser[R], f: R => U): Parser[U]
+  def flatMap[R, U](p: Parser[R], f: R => Parser[U]): Parser[U]
   def alt[R, U >: R](p: Parser[R], q: Parser[U]): Parser[U]
   def and[R, U](p: Parser[R], q: Parser[U]): Parser[(R, U)]
   def seq[R, U](p: Parser[R], q: Parser[U]): Parser[(R, U)]
