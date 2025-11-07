@@ -4,8 +4,8 @@ package test
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
 
-trait LeftrecTests[P <: RichParsers] {
-  self: AnyFunSpec & CustomMatchers[P] =>
+trait LeftrecTests {
+  self: AnyFunSpec & CustomMatchers[RichParsers] =>
 
   import parsers.{succeed as succ, *}
 
@@ -256,8 +256,7 @@ trait LeftrecTests[P <: RichParsers] {
     describe("balanced smileys") {
       lazy val az: NT[Any] = acceptIf(c => c >= 'a' && c <= 'z')
       lazy val S: NT[Any] = many(az | ' ' | ':' | ':' ~ P | '(' ~ S ~ ')')
-      val tmp: Parser[Char] = '('
-      lazy val P: NT[Any] = tmp | ')'
+      lazy val P: NT[Any] = alt('(', ')')
 
       S `shouldParse` ""
       S `shouldNotParse` ":(("

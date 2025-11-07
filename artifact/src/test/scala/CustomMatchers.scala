@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.matchers.{BeMatcher, MatchResult}
 import org.scalatest.Tag
 
-trait CustomMatchers[P <: Parsers](val parsers: P) extends Matchers {
+trait CustomMatchers[+P <: Parsers](val parsers: P) extends Matchers {
   self: AnyFunSpec =>
 
   import parsers._

@@ -4,8 +4,8 @@ package test
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
 
-trait NegationTests[P <: RichParsers] {
-  self: AnyFunSpec & CustomMatchers[P] =>
+trait NegationTests {
+  self: AnyFunSpec & CustomMatchers[RichParsers] =>
 
   import parsers.{ not as neg, * }
 

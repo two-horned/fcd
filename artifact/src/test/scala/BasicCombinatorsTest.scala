@@ -4,8 +4,8 @@ package test
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
 
-trait BasicCombinatorTests[P <: RichParsers] {
-  self: AnyFunSpec & CustomMatchers[P] =>
+trait BasicCombinatorTests {
+  self: AnyFunSpec & CustomMatchers[RichParsers] =>
 
   import parsers.{ succeed as succ, *}
 
