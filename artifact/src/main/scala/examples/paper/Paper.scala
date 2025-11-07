@@ -5,6 +5,7 @@ package fcd
   *
   * > import paper._
   */
+
 object paper
     extends RichParsers
     with DerivativeParsers
