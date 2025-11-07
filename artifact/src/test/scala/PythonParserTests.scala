@@ -3,11 +3,13 @@ package test
 
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.Tag
 
-class PythonParserTests extends AnyFunSpec with Matchers {
-  import PythonParsers._
+class PythonParserTests
+    extends AnyFunSpec
+    with CustomMatchers[PythonParsers.type](PythonParsers) {
+
+  import parsers._
+  import parsers.given
   import Lexeme._
 
   describe("indented python parser (lexeme based)") {
@@ -994,21 +996,5 @@ class PythonParserTests extends AnyFunSpec with Matchers {
     List[Lexeme](NL, NL, a, NL))
 
     parse(aInput, dummyin2).size `shouldBe` 1
-  }
-
-  extension [T](p: => Parser[T]) {
-    def shouldParse(s: Iterable[Elem], tags: Tag*) =
-      it(s"""should parse "$s" """, tags*) {
-        accepts(p, s) `shouldBe` true
-      }
-    def shouldNotParse(s: Iterable[Elem], tags: Tag*) =
-      it(s"""should not parse "$s" """, tags*) {
-        accepts(p, s) `shouldBe` false
-      }
-    // for unambiguous parses
-    def shouldParseWith(s: Iterable[Elem], result: T) =
-      it(s"""should parse "$s" with correct result""") {
-        parse(p, s) `shouldBe` List(result)
-      }
   }
 }
