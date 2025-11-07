@@ -3,10 +3,11 @@ package test
 
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
 
-trait BasicCombinatorTests extends CustomMatchers {
-  self: AnyFunSpec & Matchers & RichParsers =>
+trait BasicCombinatorTests[P <: RichParsers] {
+  self: AnyFunSpec & CustomMatchers[P] =>
+
+  import parsers.{ succeed as succ, *}
 
   describe("parser \"abc\"") {
     val p = 'a' ~ 'b' ~ 'c'
@@ -39,18 +40,18 @@ trait BasicCombinatorTests extends CustomMatchers {
   }
 
   describe("parser \"succeed(a) b\"") {
-    val p = succeed('a') ~ 'b'
+    val p = succ('a') ~ 'b'
     p `shouldParse` "b"
     p `shouldNotParse` ""
   }
 
   describe("parser \"succeed(a) succeed(b)\"") {
-    val p = succeed('a') ~ succeed('b')
+    val p = succ('a') ~ succ('b')
     p `shouldParse` ""
   }
 
   describe("parser \"succeed(a) | succeed(b)\"") {
-    val p = succeed('a') | succeed('b')
+    val p = succ('a') | succ('b')
     p `shouldParse` ""
   }
 

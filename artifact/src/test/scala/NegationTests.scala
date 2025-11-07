@@ -3,13 +3,14 @@ package test
 
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
 
-trait NegationTests extends CustomMatchers {
-  self: AnyFunSpec & Matchers & RichParsers =>
+trait NegationTests[P <: RichParsers] {
+  self: AnyFunSpec & CustomMatchers[P] =>
+
+  import parsers.{ not as neg, * }
 
   describe("parser \"not(aa)\"") {
-    val p = not("aa")
+    val p = neg("aa")
     p `shouldParse` "a"
     p `shouldNotParse` "aa"
     p `shouldParse` "aac"
@@ -17,7 +18,7 @@ trait NegationTests extends CustomMatchers {
   }
 
   describe("parser \"not(aa) & lower*\"") {
-    val p = not("aa") & many(lower)
+    val p = neg("aa") & many(lower)
     p `shouldParse` "a"
     p `shouldParse` "bc"
     p `shouldParse` "ab"
@@ -28,7 +29,7 @@ trait NegationTests extends CustomMatchers {
   }
 
   describe("parser \"not(aa ~ .*) & lower*\"") {
-    val p = not("aa" ~ many(any)) & many(lower)
+    val p = neg("aa" ~ many(any)) & many(lower)
     p `shouldParse` "a"
     p `shouldParse` "bc"
     p `shouldParse` "ab"
@@ -39,7 +40,7 @@ trait NegationTests extends CustomMatchers {
   }
 
   describe("parser \"not(.* ~ abc ~ .*)\"") {
-    val p = not(many(any) ~ "abc" ~ many(any))
+    val p = neg(many(any) ~ "abc" ~ many(any))
     p `shouldParse` ""
     p `shouldParse` "xx"
     p `shouldParse` "xxabxx"
@@ -49,7 +50,7 @@ trait NegationTests extends CustomMatchers {
   }
 
   describe("parser \"not((baaa | ba) ~ aa ~ .*) & lower*\"") {
-    val p = not(("baaa" | "ba") ~ "aa" ~ many(any)) & many(lower)
+    val p = neg(("baaa" | "ba") ~ "aa" ~ many(any)) & many(lower)
     p `shouldNotParse` "baaa"
     p `shouldNotParse` "baaaxx"
     p `shouldParse` ""

@@ -4,20 +4,22 @@ package test
 import scala.language.higherKinds
 import language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
 
 class DerivativeParsersTests
     extends AnyFunSpec
-    with RichParsers
-    with DerivativeParsers
-    with Matchers
-    with CustomMatchers
+    with CustomMatchers(paper)
     with BasicCombinatorTests
     with NegationTests
-    with LeftrecTests
-    with Section3
-    with Section4
-    with Section7 {
+    with LeftrecTests {
+
+  import parsers.{
+    succeed as succ,
+    not as neg,
+    fail as err,
+    noneOf as nonOf,
+    oneOf as onOf,
+    *
+  }
 
   // This test illustrates how to write graph representations of the
   // parsers to a file. (To execute it replace `ignore` by `describe` and
@@ -25,7 +27,7 @@ class DerivativeParsersTests
   describe("printing graph representations of parsers") {
     lazy val num: Parser[Any] = many(digit)
     lazy val A: NT[Any] = B ~ '-' ~ num | num
-    lazy val B: NT[Any] = succeed(()) ~ A
+    lazy val B: NT[Any] = succ(()) ~ A
 
     A.printToFile("test.png")
   }
@@ -173,16 +175,16 @@ class DerivativeParsersTests
   }
 
   describe("flatMap uses fixed point computation") {
-    lazy val fm: NT[Int] = succeed(1) | fm.flatMap { n =>
-      if (n < 5) succeed(n + 1) else fail
+    lazy val fm: NT[Int] = succ(1) | fm.flatMap { n =>
+      if (n < 5) succ(n + 1) else err
     }
 
     fm.results.toSet `shouldBe` Set(1, 2, 3, 4, 5)
   }
 
   describe("Stream preprocessing") {
-    lazy val ones: NT[Any] = succeed(()) | '1' ~ ones
-    lazy val zeros: NT[Any] = succeed(()) | '0' ~ zeros
+    lazy val ones: NT[Any] = succ(()) | '1' ~ ones
+    lazy val zeros: NT[Any] = succ(()) | '0' ~ zeros
 
     lazy val oneszeros: Parser[Any] = '1' ~ '1' ~ '0' ~ '0'
 
@@ -499,7 +501,7 @@ class DerivativeParsersTests
     // If the right-hand-side `r` is locally known the parser can be
     // rewritten to:
 
-    val rewrite = p ~ r | (not(p ~ always) &> (q ~ r))
+    val rewrite = p ~ r | (neg(p ~ always) &> (q ~ r))
     rewrite `shouldNotParse` "foo"
     rewrite `shouldParse` "foooo"
     rewrite `shouldParse` "fb"
@@ -562,10 +564,10 @@ class DerivativeParsersTests
 
     // some lexers
     val singleString: Parser[String] =
-      consumed('"' ~ many(noneOf("\"\n")) ~ '"')
-    val comment: Parser[String] = consumed('#' ~ many(noneOf("\n")) ~ '\n')
+      consumed('"' ~ many(nonOf("\"\n")) ~ '"')
+    val comment: Parser[String] = consumed('#' ~ many(nonOf("\n")) ~ '\n')
     val multilineString: Parser[String] =
-      consumed("'''" ~ not(always ~ prefix("'''")) ~ "'''")
+      consumed("'''" ~ neg(always ~ prefix("'''")) ~ "'''")
 
     singleString `shouldParse` "\"hello world\""
     singleString `shouldNotParse` "\"hello\nworld\""
@@ -603,7 +605,7 @@ class DerivativeParsersTests
     val pairs = Map[Elem, Elem]('(' -> ')', '[' -> ']', '{' -> '}')
     val (opening, closing) = (pairs.keys.toList, pairs.values.toList)
 
-    lazy val dyck: NT[Any] = oneOf(opening) >> { paren =>
+    lazy val dyck: NT[Any] = onOf(opening) >> { paren =>
       many(dyck) ~ pairs(paren)
     }
     // '(' ~> many(dyck) <~ ')'
@@ -612,8 +614,8 @@ class DerivativeParsersTests
     val parens =
       // we need to intersect with the outermost parenthesis to prevent
       // parsing something like "aaa()aaa"
-      (oneOf(opening) >> { paren => always ~ pairs(paren) }) &>
-        transform[Any](noText | noneOf(opening) & noneOf(closing), fail, skip)(
+      (onOf(opening) >> { paren => always ~ pairs(paren) }) &>
+        transform[Any](noText | nonOf(opening) & nonOf(closing), err, skip)(
           dyck
         )
 
@@ -709,7 +711,7 @@ class DerivativeParsersTests
   describe(
     "Regression: `not` should preserve invariant `p.results.isEmpty != p.accepts`"
   ) {
-    val p = not("a" | "b")
+    val p = neg("a" | "b")
     val p_a = p <<< "a"
     val p_b = p <<< "b"
     val p_c = p <<< "c"

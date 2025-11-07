@@ -3,11 +3,14 @@ package test
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.BeMatcher
-import org.scalatest.matchers.MatchResult
+import org.scalatest.matchers.{BeMatcher, MatchResult}
 import org.scalatest.Tag
 
-trait CustomMatchers { self: AnyFunSpec & Matchers & RichParsers =>
+trait CustomMatchers[P <: Parsers](val parsers: P) extends Matchers {
+  self: AnyFunSpec =>
+
+  import parsers._
+
   extension [T](p: => Parser[T]) {
     def shouldParse(s: Iterable[Elem], tags: Tag*) =
       it(s"""should parse "$s" """, tags*) {

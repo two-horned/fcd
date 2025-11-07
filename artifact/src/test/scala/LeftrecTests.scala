@@ -3,10 +3,11 @@ package test
 
 import scala.language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
 
-trait LeftrecTests extends CustomMatchers {
-  self: AnyFunSpec & Matchers & RichParsers =>
+trait LeftrecTests[P <: RichParsers] {
+  self: AnyFunSpec & CustomMatchers[P] =>
+
+  import parsers.{succeed as succ, *}
 
   describe("lazyness of alt") {
 
@@ -55,7 +56,7 @@ trait LeftrecTests extends CustomMatchers {
   describe("left recursion") {
 
     describe("A = A ~ a | empty") {
-      lazy val A: NT[Any] = A ~ 'a' | succeed(42)
+      lazy val A: NT[Any] = A ~ 'a' | succ(42)
 
       A `shouldParse` ""
       A `shouldParse` "a"
@@ -63,7 +64,7 @@ trait LeftrecTests extends CustomMatchers {
     }
 
     describe("A = empty | A ~ a ") {
-      lazy val A: NT[Any] = succeed(42) | A ~ 'a'
+      lazy val A: NT[Any] = succ(42) | A ~ 'a'
 
       A `shouldParse` ""
       A `shouldParse` "a"
@@ -75,7 +76,7 @@ trait LeftrecTests extends CustomMatchers {
     describe("one level indirect leftrecursion") {
       lazy val num: Parser[Any] = many(digit)
       lazy val A: NT[Any] = B ~ '-' ~ num | num
-      lazy val B: NT[Any] = succeed(()) ~ A
+      lazy val B: NT[Any] = succ(()) ~ A
 
       // A `shouldParse` "1"
       // A `shouldParse` "12"
@@ -91,8 +92,8 @@ trait LeftrecTests extends CustomMatchers {
     describe("two levels indirect leftrecursion") {
       lazy val num: Parser[Any] = some(digit)
       lazy val A: NT[Any] = B ~ '-' ~ num | num
-      lazy val B: NT[Any] = succeed(()) ~ C ~ '+' ~ num
-      lazy val C: NT[Any] = succeed(()) ~ A
+      lazy val B: NT[Any] = succ(()) ~ C ~ '+' ~ num
+      lazy val C: NT[Any] = succ(()) ~ A
 
       A `shouldParse` "1"
       A `shouldParse` "12"
@@ -108,7 +109,7 @@ trait LeftrecTests extends CustomMatchers {
 
     // From "Packrat parsers can support left-recursion"
     describe("super linear parse time") {
-      lazy val start: NT[Any] = ones ~ '2' | '1' ~ start | succeed(())
+      lazy val start: NT[Any] = ones ~ '2' | '1' ~ start | succ(())
       lazy val ones: NT[Any] = ones ~ '1' | '1'
 
       start `shouldParse` ""
@@ -133,7 +134,7 @@ trait LeftrecTests extends CustomMatchers {
     }
 
     describe("A = empty ~ A ~ b | empty") {
-      lazy val A: NT[Any] = succeed("done") ~ A ~ 'b' | succeed("done")
+      lazy val A: NT[Any] = succ("done") ~ A ~ 'b' | succ("done")
       A `shouldParse` ""
       A `shouldParse` "b"
       A `shouldParse` "bb"
@@ -142,7 +143,7 @@ trait LeftrecTests extends CustomMatchers {
     // should parse at most as many 'd's as it parses 'b's.
     describe("A = B ~ A ~ b | c\n  B = d | empty") {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
-      lazy val B: NT[?] = 'd' | succeed("done")
+      lazy val B: NT[?] = 'd' | succ("done")
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
@@ -215,7 +216,7 @@ trait LeftrecTests extends CustomMatchers {
 
       lazy val arrayEl: NT[Any] =
         (expression
-          | succeed("undefined"))
+          | succ("undefined"))
 
       expression `shouldParse` ""
       expression `shouldParse` "a"
@@ -302,7 +303,7 @@ trait LeftrecTests extends CustomMatchers {
     // taken from Tillmann Rendel's GLL library
     describe("grammar with hidden left recursion") {
       lazy val S: NT[Any] = C ~ 'a' | 'd'
-      lazy val B: NT[Any] = succeed(()) | 'a'
+      lazy val B: NT[Any] = succ(()) | 'a'
       lazy val C: NT[Any] = 'b' | B ~ C ~ 'b' | 'b' ~ 'b'
 
       S `shouldNotParse` ""
