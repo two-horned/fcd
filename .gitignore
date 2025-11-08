@@ -1,7 +1,6 @@
 # Scala
 *.class
 *.log
-.scalafmt.conf
 
 # Mac
 .DS_Store
@@ -10,12 +9,16 @@
 .cache
 .history
 .lib
-.bloop
 dist
 target
 lib_managed
 src_managed
 project
-.bsp
-.metals
 .scala-build
+
+# Tooling
+.project
+.metals
+.bsp
+.bloop
+.scalafmt.conf
