@@ -18,7 +18,6 @@ trait Printable {
       <tr><td>results</td><td>{results.toSet.mkString(", ")}</td></tr>
     </table>
 
-
   private lazy val printGraph: String =
     s"""strict digraph G {
        |  ${printNode}
@@ -39,7 +38,8 @@ abstract class NullaryPrintable(val name: String) extends Printable {
   def printNode = s"""$id [label="$name", shape=circle]"""
 }
 
-abstract class UnaryPrintable(val name: String, _p: => Printable) extends Printable {
+abstract class UnaryPrintable(val name: String, _p: => Printable)
+    extends Printable {
   private lazy val p = _p
   def printNode =
     s"""  ${id} [shape=none, fontsize=8, fontname=mono, label=<$table>];
@@ -47,7 +47,8 @@ abstract class UnaryPrintable(val name: String, _p: => Printable) extends Printa
        |${p.printNode}""".stripMargin('|')
 }
 
-abstract class BinaryPrintable(val name: String, p: Printable, q: Printable) extends Printable {
+abstract class BinaryPrintable(val name: String, p: Printable, q: Printable)
+    extends Printable {
   def printNode =
     s"""  ${id} [shape=none, fontsize=8, fontname=mono, label=<$table>];
        |  ${id}:sw -> ${p.id}

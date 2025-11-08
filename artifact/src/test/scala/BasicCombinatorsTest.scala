@@ -7,7 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 trait BasicCombinatorTests {
   self: AnyFunSpec & CustomMatchers[RichParsers] =>
 
-  import parsers.{ succeed as succ, *}
+  import parsers.{succeed as succ, *}
 
   describe("parser \"abc\"") {
     val p = 'a' ~ 'b' ~ 'c'
