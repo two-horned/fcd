@@ -9,7 +9,7 @@ import org.scalatest.Tag
 trait CustomMatchers[+P <: Parsers](val parsers: P) extends Matchers {
   self: AnyFunSpec =>
 
-  import parsers._
+  import parsers.{Elem, Parser, accepts, isSuccess, parse}
 
   extension [T](p: => Parser[T]) {
     def shouldParse(s: Iterable[Elem], tags: Tag*) =
