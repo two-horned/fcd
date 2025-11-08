@@ -31,15 +31,16 @@ trait DerivedOps { self: Parsers & Syntax =>
   // def always[T](t: T): Parser[T] =
   //   many(any) map { _ => t }
 
-  def oneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf {
-    t => s.exists(_ == t)
+  def oneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf { t =>
+    s.exists(_ == t)
   }
 
-  def noneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf {
-    t => s.forall(_ != t)
+  def noneOf(s: Iterable[Elem]): Parser[Elem] = acceptIf { t =>
+    s.forall(_ != t)
   }
 
-  def opt[T](p: Parser[T]): Parser[Option[T]] = alt(p ^^ { r => Some(r) }, succeed(None))
+  def opt[T](p: Parser[T]): Parser[Option[T]] =
+    alt(p ^^ { r => Some(r) }, succeed(None))
 
   def manyN[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
@@ -100,14 +101,19 @@ trait DerivedOps { self: Parsers & Syntax =>
   // described by the function `f`.
   def repeat[T](f: Parser[T] => Parser[Parser[T]]): Parser[T] => Parser[T] = {
     val cache = scala.collection.mutable.WeakHashMap.empty[Parser[T], Parser[T]]
-    def rec: Parser[T] => Parser[T] = p => cache.getOrElseUpdate(p, {
-      done(p) | nonterminal(f(p) >> rec)
-    })
+    def rec: Parser[T] => Parser[T] = p =>
+      cache.getOrElseUpdate(
+        p, {
+          done(p) | nonterminal(f(p) >> rec)
+        }
+      )
     rec
   }
 
   // repeat is just an instance of repeatAll
-  def repeatAll[T](f: List[Parser[T]] => Parser[List[Parser[T]]]): List[Parser[T]] => Parser[List[T]] = ps =>
+  def repeatAll[T](
+      f: List[Parser[T]] => Parser[List[Parser[T]]]
+  ): List[Parser[T]] => Parser[List[T]] = ps =>
     collect(ps) | f(ps) >> repeatAll(f)
 
   private def mkList[T] = (_: ~[T, List[T]]) match { case x ~ xs => x :: xs }
@@ -126,12 +132,10 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   def lookahead[T](p: Parser[Any], q: Parser[T]): Parser[T] =
     not(prefix(p)) &> q
-    //consumed(p) >> { in => q <<< in }
-
+    // consumed(p) >> { in => q <<< in }
 
   // some extension point for optimization
   def prefix: Parser[Any] => Parser[Unit] = p => p ~> always
-
 
   // per-element action performed on p
   def rep[T](f: Elem => Parser[T] => Parser[T]) =
@@ -149,26 +153,31 @@ trait DerivedOps { self: Parsers & Syntax =>
   def mapInPartial[T](f: PartialFunction[Elem, Elem]): Parser[T] => Parser[T] =
     mapIn(f orElse { case x => x })
 
-  def inRegion[T](region: Parser[Any], f: Parser[Parser[T]] => Parser[Parser[T]]): Parser[T] => Parser[T] = {
+  def inRegion[T](
+      region: Parser[Any],
+      f: Parser[Parser[T]] => Parser[Parser[T]]
+  ): Parser[T] => Parser[T] = {
 
-      // to prevent accessive re-parsing we introduce some caching on this
-      // parser combinator here.
-      val cache = scala.collection.mutable.WeakHashMap.empty[Parser[T], Parser[T]]
+    // to prevent accessive re-parsing we introduce some caching on this
+    // parser combinator here.
+    val cache = scala.collection.mutable.WeakHashMap.empty[Parser[T], Parser[T]]
 
-      def rec: Parser[T] => Parser[T] = p => cache.getOrElseUpdate(p, {
+    def rec: Parser[T] => Parser[T] = p =>
+      cache.getOrElseUpdate(
+        p, {
 
-        lazy val dp = delegate(p)
-        nonterminal (
-          done(p) | biasedAlt(
-            region &> f(dp) >> rec,
-            (any &> dp) >> rec))
-      })
-      rec
-    }
-
+          lazy val dp = delegate(p)
+          nonterminal(
+            done(p) | biasedAlt(region &> f(dp) >> rec, (any &> dp) >> rec)
+          )
+        }
+      )
+    rec
+  }
 
   // Greedy repetition
-  def greedyMany[T](p: Parser[T]): Parser[List[T]] = greedySome(p) | succeed(Nil)
+  def greedyMany[T](p: Parser[T]): Parser[List[T]] =
+    greedySome(p) | succeed(Nil)
 
   // Instead of a class use a closure:
   def greedySome[T]: Parser[T] => Parser[List[T]] = { p =>
@@ -178,8 +187,7 @@ trait DerivedOps { self: Parsers & Syntax =>
 
     def forceRead(curr: Parser[T]): Parser[List[T]] =
       withNext(curr, succeed(Nil)) | eat { el =>
-        biasedAlt( forceRead(curr << el),
-                   withNext(curr, greedySome(p) << el))
+        biasedAlt(forceRead(curr << el), withNext(curr, greedySome(p) << el))
       }
 
     forceRead(p)
