@@ -76,8 +76,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   def join[T](p: Parser[Parser[T]]): Parser[T] = p >> done
 
   // A parser that captures the tokens consumed by `p`
-  def consumed[T](p: Parser[T]): Parser[List[Elem]] =
-    many(any) <& p
+  def consumed[T](p: Parser[T]): Parser[List[Elem]] = many(any) <& p
 
   def eat[R](f: Elem => Parser[R]): Parser[R] = any >> f
 

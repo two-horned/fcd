@@ -167,9 +167,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     // canonicalization rule (1) from PLDI 2016
     override def seq[T](r: Parser[T]): Parser[(R ~ U) ~ T] =
-      (p seq (q seq r)) map { case (rr ~ (ru ~ rt)) =>
-        ((rr, ru), rt)
-      }
+      (p seq (q seq r)) map { case (rr, (ru, rt)) => ((rr, ru), rt) }
   }
 
   class Done[R](val p: Parser[R])
