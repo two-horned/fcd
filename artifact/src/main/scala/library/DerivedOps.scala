@@ -1,7 +1,5 @@
 package fcd
 
-import scala.language.implicitConversions
-
 trait DerivedOps { self: Parsers & Syntax =>
 
   val any: Parser[Elem] = acceptIf(_ => true)
