@@ -32,11 +32,8 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     // for optimization of biased choice
     def prefix: Parser[Unit] = {
-      if (accepts) {
-        always
-      } else {
-        eat { el => (p consume el).prefix }
-      }
+      if (accepts) always
+      else eat { el => (p consume el).prefix }
     }
   }
 
@@ -44,19 +41,19 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def results = List()
     override def failed = true
     override def accepts = false
-    override def consume: Elem => this.type = in => this
+    override def consume = _ => this
 
-    override def alt[U >: Nothing](q: Parser[U]): q.type = q
-    override def seq[U](q: Parser[U]): this.type = this
-    override def and[U](q: Parser[U]): this.type = this
-    override def map[U](f: Nothing => U): this.type = this
-    override def flatMap[U](g: Nothing => Parser[U]): this.type = this
+    override def alt[U >: Nothing](q: Parser[U]) = q
+    override def seq[U](q: Parser[U]) = this
+    override def and[U](q: Parser[U]) = this
+    override def map[U](f: Nothing => U) = this
+    override def flatMap[U](g: Nothing => Parser[U]) = this
     override def mapResults[U](
         f: (=> Results[Nothing]) => Results[U]
-    ): this.type = this
+    ) = this
     override def done = this
 
-    override def not: Parser[Unit] = Always
+    override def not = Always
     override def prefix = this
     override def toString: String = "∅"
   }
@@ -65,11 +62,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def results = List(())
     override def failed = false
     override def accepts = true
-    override def consume = in => Always
-    override def not: Parser[Unit] = fail
-    override def and[U](q: Parser[U]): Parser[(Unit, U)] = q map { r =>
-      ((), r)
-    }
+    override def consume = _ => this
+    override def not = Fail
+    override def and[U](q: Parser[U]) = q map { ((), _) }
 
     // this is a valid optimization, however it almost never occurs.
     override def alt[U >: Unit](q: Parser[U]) = this
