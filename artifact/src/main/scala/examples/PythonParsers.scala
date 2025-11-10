@@ -182,7 +182,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     stripComments[T] compose explicitJoin[T] compose implicitJoin[T]
 
   def binOp[T, S](p: Parser[T], op: Parser[S], f: (T, S, T) => T) = {
-    lazy val ps: Parser[T] = nonterminal((p ␣ op ␣ ps) ^^ { case l ~ op ~ r =>
+    lazy val ps: Parser[T] = nonterminal((p ␣ op ␣ ps) ^^ { case ((l, op), r) =>
       f(l, op, r)
     } | p)
     ps
@@ -324,7 +324,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val for_stmt: Parser[Any] =
     "for" ␣> exprlist ␣ ("in" ␣> testlist ␣ (":" ␣> suite ~ spacedOpt(
       ("else" ␣> ":") ␣> suite
-    ))) ^^ { case (exprs ~ (tests ~ (body ~ default))) =>
+    ))) ^^ { case (exprs, (tests, (body, default))) =>
       For(exprs, tests, body, default)
     }
   lazy val try_stmt: Parser[Any] =
