@@ -41,7 +41,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   }
 
   object Fail extends NullaryPrintable("∅") with Parser[Nothing] {
-    override def results = List.empty
+    override def results = List()
     override def failed = true
     override def accepts = false
     override def consume: Elem => this.type = in => this
@@ -95,7 +95,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   }
 
   case class Accept(elem: Elem) extends Parser[Elem] {
-    def results = List.empty
+    def results = List()
     def failed = false
     def accepts = false
     def consume = (in: Elem) =>
@@ -114,7 +114,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class AcceptIf(f: Elem => Boolean)
       extends NullaryPrintable("acceptIf")
       with Parser[Elem] {
-    def results = List.empty
+    def results = List()
     def failed = false
     def accepts = false
     def consume = (in: Elem) =>
@@ -128,7 +128,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class Not[R](val p: Parser[R])
       extends UnaryPrintable("not", p)
       with Parser[Unit] {
-    def results = (if (p.results.isEmpty) List(()) else List.empty)
+    def results = (if (p.results.isEmpty) List(()) else List())
     def failed = false // we never know, this is a conservative approx.
     def accepts = !p.accepts
     def consume: Elem => Parser[Unit] = in => (p consume in).not
@@ -265,7 +265,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     protected object resultsFix extends Attributed {
       object results
           extends Attribute[List[R]](
-            List.empty,
+            List(),
             (nw, ol) => (nw ++ ol).distinct,
             (nw, ol) => nw.toSet.subsetOf(ol.toSet)
           )
@@ -275,7 +275,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       override protected def updateAttributes() = results.update()
     }
 
-    private val cache: mutable.HashMap[Elem, Parser[R]] = mutable.HashMap.empty
+    private val cache: mutable.HashMap[Elem, Parser[R]] = mutable.HashMap()
     // Wrapping in `nonterminal` is cecessary for left-recursive
     // grammars and for grammars like "DerivativeParsers / preprocessor"
     // that recursively derive. Optimizing the nonterminal node away causes
