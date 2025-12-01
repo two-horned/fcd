@@ -22,6 +22,7 @@ trait DerivedOps { self: Parsers & Syntax =>
     }
     some_v
   }
+
   def many[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
     lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
