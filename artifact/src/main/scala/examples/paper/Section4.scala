@@ -45,7 +45,7 @@ trait Section4 { self: Section3 & RichParsers =>
   /** Section 4.2 Modular Definitions as Combinators
     */
   object section_4_2 {
-    def unescChar(c: Char): String = StringContext treatEscapes s"\\$c"
+    def unescChar(c: Char): String = StringContext processEscapes s"\\$c"
 
     // ### Example. Preprocessor that unescapes backslash escaped characters
     //
