@@ -343,7 +343,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   // optimization: Once p accepts, p as a prefix will always accept.
   // often used to implement biased choice: (not(prefix(p)) &> q
-  override def prefix: Parser[Any] => Parser[Unit] = p => p.prefix
+  override def prefix: Parser[Any] => Parser[Unit] = _.prefix
 }
 
 object DerivativeParsers extends RichParsers with DerivativeParsers {

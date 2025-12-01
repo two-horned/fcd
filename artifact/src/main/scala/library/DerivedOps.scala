@@ -141,7 +141,7 @@ trait DerivedOps { self: Parsers & Syntax =>
     // consumed(p) >> { in => q <<< in }
 
   // some extension point for optimization
-  def prefix: Parser[Any] => Parser[Unit] = p => p ~> always
+  def prefix: Parser[Any] => Parser[Unit] = _ ~> always
 
   // per-element action performed on p
   def rep[T](f: Elem => Parser[T] => Parser[T]) =

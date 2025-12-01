@@ -30,7 +30,7 @@ class PythonParserTests
   describe("implicit line joining") {
 
     given keyword: Conversion[Symbol, Lexeme] = kw => KW(kw.name)
-    given punctuation: Conversion[String, Lexeme] = p => Punct(p)
+    given punctuation: Conversion[String, Lexeme] = Punct(_)
 
     val p = many(WS | id | "(" | ")" | "[" | "]")
     val a = Id("A")
