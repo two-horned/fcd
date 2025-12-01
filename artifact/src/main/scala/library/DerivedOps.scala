@@ -1,7 +1,5 @@
 package fcd
 
-import scala.language.implicitConversions
-
 trait DerivedOps { self: Parsers & Syntax =>
 
   val any: Parser[Elem] = acceptIf(_ => true)
@@ -16,19 +14,19 @@ trait DerivedOps { self: Parsers & Syntax =>
     }
 
   def some[T](p: Parser[T]): Parser[List[T]] = {
-    lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+    lazy val many_v: NT[List[T]] = NT(alt(some_v, succeed(Nil)))
+    lazy val some_v: Parser[List[T]] = seq(p, many_v.parser) ^^ { case (p, ps) =>
       p :: ps
     }
     some_v
   }
 
   def many[T](p: Parser[T]): Parser[List[T]] = {
-    lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+    lazy val many_v: NT[List[T]] = NT(alt(some_v, succeed(Nil)))
+    lazy val some_v: Parser[List[T]] = seq(p, many_v.parser) ^^ { case (p, ps) =>
       p :: ps
     }
-    many_v
+    many_v.parser
   }
 
   // val always: Parser[Unit] = many(any) map { _ => () }
@@ -63,8 +61,8 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   // same optimization as above for many and some
   def someSep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
-    lazy val many_v: NT[List[T]] = alt(sep ~> some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+    lazy val many_v: NT[List[T]] = NT(alt(sep ~> some_v, succeed(Nil)))
+    lazy val some_v: Parser[List[T]] = seq(p, many_v.parser) ^^ { case (p, ps) =>
       p :: ps
     }
     some_v
@@ -124,7 +122,7 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   private def mkList[T] = (_: ~[T, List[T]]) match { case (x, xs) => x :: xs }
 
-  val succeedForever: NT[Unit] = succeed(()) | (any ~> succeedForever)
+  lazy val succeedForever: NT[Unit] = NT(succeed(()) | (any ~> succeedForever.parser))
 
   def rightDerivative[R](p: Parser[R], elem: Elem): Parser[R] =
     done(p << elem) | eat { c => rightDerivative(p << c, elem) }
@@ -182,7 +180,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   }
 
   // Greedy repetition
-  def greedyMany[T](p: Parser[T]) = greedySome(p) | succeed(Nil)
+  def greedyMany[T](p: Parser[T]) = greedySome(p).parser | succeed(Nil)
 
   // Instead of a class use a closure:
   def greedySome[T]: Parser[T] => NT[List[T]] = { p =>
@@ -192,9 +190,9 @@ trait DerivedOps { self: Parsers & Syntax =>
 
     def forceRead(curr: Parser[T]): Parser[List[T]] =
       withNext(curr, succeed(Nil)) | eat { el =>
-        biasedAlt(forceRead(curr << el), withNext(curr, greedySome(p) << el))
+        biasedAlt(forceRead(curr << el), withNext(curr, greedySome(p).parser << el))
       }
 
-    forceRead(p)
+    NT(forceRead(p))
   }
 }
