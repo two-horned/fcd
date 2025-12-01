@@ -2,8 +2,8 @@ package fcd
 
 trait Syntax { self: Parsers & DerivedOps =>
   extension [R](p: Parser[R]) {
-    def <<(in: Elem): Parser[R] = feed(p, in)
-    def <<<(in: Seq[Elem]): Parser[R] = feedAll(p, in)
+    def <<(in: Elem) = feed(p, in)
+    def <<<(in: Seq[Elem]) = feedAll(p, in)
     def ~[U](q: Parser[U]) = seq(p, q)
     def <~[U](q: Parser[U]) = map(seq(p, q), _._1)
     def ~>[U](q: Parser[U]) = map(seq(p, q), _._2)
@@ -16,9 +16,9 @@ trait Syntax { self: Parsers & DerivedOps =>
     def <|[U >: R](q: Parser[U]) = biasedAlt(p, q)
     def |>[U >: R](q: Parser[U]) = biasedAlt(q, p)
 
-    def ^^[U](f: R => U): Parser[U] = map(p, f)
-    def ^^^[U](u: => U): Parser[U] = map(p, _ => u)
-    def >>[U](f: R => Parser[U]): Parser[U] = flatMap(p, f)
+    def ^^[U](f: R => U) = map(p, f)
+    def ^^^[U](u: => U) = map(p, _ => u)
+    def >>[U](f: R => Parser[U]) = flatMap(p, f)
 
     def ? = opt(p)
     def * = many(p)
