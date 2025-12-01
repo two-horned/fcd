@@ -27,8 +27,7 @@ trait Syntax { self: Parsers & DerivedOps =>
 
   given liftToParser[R, U](using
       conv: R => U
-  ): Conversion[Parser[R], Parser[U]] =
-    p => map(p, conv)
+  ): Conversion[Parser[R], Parser[U]] = map(_, conv)
 
   // tag nonterminals - this allows automatic insertion of nt-markers
   final case class NT[+R](parser: Parser[R])
