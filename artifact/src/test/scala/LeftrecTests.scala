@@ -143,7 +143,7 @@ trait LeftrecTests {
     // should parse at most as many 'd's as it parses 'b's.
     describe("A = B ~ A ~ b | c\n  B = d | empty") {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
-      lazy val B: NT[Any]  = 'd' | succ("done")
+      lazy val B: NT[Any] = 'd' | succ("done")
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
@@ -202,21 +202,13 @@ trait LeftrecTests {
         (literal ~ '+'
           | condExpr)
 
-      lazy val condExpr: NT[Any] =
-        (condExpr ~ '?'
-          | eqExpr)
+      lazy val condExpr: NT[Any] = condExpr ~ '?' | eqExpr
 
-      lazy val eqExpr: NT[Any] =
-        (eqExpr ~ '*'
-          | literal)
+      lazy val eqExpr: NT[Any] = eqExpr ~ '*' | literal
 
-      lazy val literal: NT[Any] =
-        (many('a')
-          | '[' ~ arrayEl)
+      lazy val literal: NT[Any] = many('a') | '[' ~ arrayEl
 
-      lazy val arrayEl: NT[Any] =
-        (expression
-          | succ("undefined"))
+      lazy val arrayEl: NT[Any] = expression | succ("undefined")
 
       expression `shouldParse` ""
       expression `shouldParse` "a"
