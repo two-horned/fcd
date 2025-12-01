@@ -187,7 +187,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   // Instead of a class use a closure:
   def greedySome[T]: Parser[T] => NT[List[T]] = { p =>
 
-    def withNext(p: Parser[T], ps: Parser[List[T]]): Parser[List[T]] =
+    def withNext(p: Parser[T], ps: Parser[List[T]]) =
       done(p) ~ ps ^^ { case (t, ts) => t :: ts }
 
     def forceRead(curr: Parser[T]): Parser[List[T]] =
