@@ -249,7 +249,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val vfpdef = id
 
   // --- Statements ---
-  lazy val stmt: NT[?] = simple_stmt | compound_stmt
+  lazy val stmt: NT[Any] = simple_stmt | compound_stmt
   lazy val simple_stmt =
     listOf(small_stmt, ";") <␣ NL ^^ this.Simple.apply
   lazy val small_stmt =
@@ -341,27 +341,27 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     (or_test ~ spacedOpt("if" ␣> or_test ␣ ("else" ␣> test))
       | lambdef)
   lazy val test_nocond: NT[Any] = or_test | lambdef_nocond
-  lazy val lambdef: NT[?] = "lambda" ~> spacedOpt(varargslist) ␣ (":" ␣> test)
-  lazy val lambdef_nocond: NT[?] =
+  lazy val lambdef: NT[Any] = "lambda" ~> spacedOpt(varargslist) ␣ (":" ␣> test)
+  lazy val lambdef_nocond: NT[Any] =
     "lambda" ~> spacedOpt(varargslist) ␣ (":" ␣> test_nocond)
   lazy val or_test: NT[Any] = someSep(and_test, "or")
-  lazy val and_test: NT[?] = someSep(not_test, "and")
+  lazy val and_test: NT[Any] = someSep(not_test, "and")
   lazy val not_test: NT[Any] = "not" ␣> not_test | comparison
-  lazy val comparison: NT[?] = someSep(expr, comp_op)
+  lazy val comparison: NT[Any] = someSep(expr, comp_op)
   // # <> isn't actually a valid comparison operator in Python. It's here for the
   // # sake of a __future__ import described in PEP 401 (which really works :-)
   lazy val comp_op = ("<" | ">" | "==" | ">=" | "<=" | "<>" | "!="
     | "in" | "not" ␣ "in" | "is" | "is" ␣ "not")
 
   lazy val expr: NT[Any] = binOp(xor_expr, "|", this.BinOp.apply)
-  lazy val xor_expr: NT[?] = binOp(and_expr, "^", this.BinOp.apply)
-  lazy val and_expr: NT[?] = binOp(shift_expr, "&", this.BinOp.apply)
-  lazy val shift_expr: NT[?] = binOp(arith_expr, "<<" | ">>", this.BinOp.apply)
-  lazy val arith_expr: NT[?] = binOp(term, "+" | "-", this.BinOp.apply)
-  lazy val term: NT[?] =
+  lazy val xor_expr: NT[Any] = binOp(and_expr, "^", this.BinOp.apply)
+  lazy val and_expr: NT[Any] = binOp(shift_expr, "&", this.BinOp.apply)
+  lazy val shift_expr: NT[Any] = binOp(arith_expr, "<<" | ">>", this.BinOp.apply)
+  lazy val arith_expr: NT[Any] = binOp(term, "+" | "-", this.BinOp.apply)
+  lazy val term: NT[Any] =
     binOp(factor, "*" | "@" | "/" | "%" | "//", this.BinOp.apply)
   lazy val factor: NT[Any] = ("+" | "-" | "~") ␣ factor | power
-  lazy val power: NT[?] = atom_expr | atom_expr ␣ "**" ␣ factor
+  lazy val power: NT[Any] = atom_expr | atom_expr ␣ "**" ␣ factor
   lazy val atom_expr =
     opt("await" ~ spaces) ~> atom ~ spacedMany(trailer)
   lazy val atom = ("(" ␣> (yield_expr | testlist_comp) <␣ ")"
@@ -404,7 +404,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     | "**" ␣ test
     | "*" ␣ test)
 
-  lazy val comp_iter: NT[?] = comp_for | comp_if
+  lazy val comp_iter: NT[Any] = comp_for | comp_if
   lazy val comp_for =
     "for" ␣> exprlist ␣ ("in" ␣> or_test ~ spacedOpt(comp_iter))
   lazy val comp_if = "if" ␣> test_nocond ~ spacedOpt(comp_iter)

@@ -21,12 +21,12 @@ trait Section4 { self: Section3 & RichParsers =>
     // very simplified grammar to illustrate parser selection
     import section_3_5_improved._
 
-    lazy val stmt: NT[?] =
+    lazy val stmt: NT[Any] =
       ("while" ~ space ~ "(true):" ~ block
         | some('x') ~ '\n')
 
     lazy val stmts = many(stmt)
-    lazy val block: NT[?] = '\n' ~ indented(stmts)
+    lazy val block: NT[Any] = '\n' ~ indented(stmts)
 
     // ### Example: Retroactive selection of the while statement nonterminal
     //
@@ -78,7 +78,7 @@ trait Section4 { self: Section3 & RichParsers =>
         | eat { c => inText(text << c, code) })
 
     // Simple variant of balanced parenthesis
-    lazy val parens: NT[?] = '(' ~ parens ~ ')' | succeed(())
+    lazy val parens: NT[Any] = '(' ~ parens ~ ')' | succeed(())
 
     // Blocks of "a"s, such as:
     //
@@ -179,8 +179,8 @@ trait Section4 { self: Section3 & RichParsers =>
     //   |~~~ |
     //   |aaaa|
     //   +----+
-    lazy val combined: NT[?] = inText(asAndTables, spaced(parens))
-    lazy val asAndTables: NT[?] = as | table(combined)
+    lazy val combined: NT[Any] = inText(asAndTables, spaced(parens))
+    lazy val asAndTables: NT[Any] = as | table(combined)
 
     // Again, some more examples of words that are recognized by `combined` can
     // be found in `DerivativeParsersTests.scala`.

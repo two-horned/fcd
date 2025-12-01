@@ -143,7 +143,7 @@ trait LeftrecTests {
     // should parse at most as many 'd's as it parses 'b's.
     describe("A = B ~ A ~ b | c\n  B = d | empty") {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
-      lazy val B: NT[?] = 'd' | succ("done")
+      lazy val B: NT[Any]  = 'd' | succ("done")
 
       A `shouldParse` "c"
       A `shouldParse` "cb"
