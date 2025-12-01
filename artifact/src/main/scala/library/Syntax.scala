@@ -33,7 +33,7 @@ trait Syntax { self: Parsers & DerivedOps =>
   // tag nonterminals - this allows automatic insertion of nt-markers
   final case class NT[+R](parser: Parser[R])
   given [R]: Conversion[NT[R], Parser[R]] = _.parser
-  given [R]: Conversion[Parser[R], NT[R]] = parser => NT(nonterminal(parser))
+  given [R]: Conversion[Parser[R], NT[R]] = p => NT(nonterminal(p))
 
   given tupleSeq3[T1, T2, T3, O]
       : Conversion[(T1, T2, T3) => O, (T1 ~ T2 ~ T3) => O] with {
