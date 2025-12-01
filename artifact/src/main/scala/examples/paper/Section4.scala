@@ -2,9 +2,9 @@ package fcd
 
 import scala.language.implicitConversions
 
-/** Section 4 - Applications
+/** Section 4 – Applications
   *
-  * This file contains all code examples from section 5 of our paper.
+  * This file contains all code examples from section 4 of our paper.
   *
   * Brachthäuser, Rendel, Ostermann. Parsing with First-Class Derivatives To
   * appear in OOPSLA 2016.
@@ -21,12 +21,12 @@ trait Section4 { self: Section3 & RichParsers =>
     // very simplified grammar to illustrate parser selection
     import section_3_5_improved._
 
-    lazy val stmt: NT[Any] =
+    lazy val stmt: NT[?] =
       ("while" ~ space ~ "(true):" ~ block
         | some('x') ~ '\n')
 
     lazy val stmts = many(stmt)
-    lazy val block: NT[Any] = '\n' ~ indented(stmts)
+    lazy val block: NT[?] = '\n' ~ indented(stmts)
 
     // ### Example: Retroactive selection of the while statement nonterminal
     //
@@ -45,7 +45,7 @@ trait Section4 { self: Section3 & RichParsers =>
   /** Section 4.2 Modular Definitions as Combinators
     */
   object section_4_2 {
-    def unescChar(c: Char): String = StringContext processEscapes s"\\$c"
+    def unescChar(c: Char) = StringContext processEscapes s"\\$c"
 
     // ### Example. Preprocessor that unescapes backslash escaped characters
     //
@@ -65,7 +65,7 @@ trait Section4 { self: Section3 & RichParsers =>
 
     // ### Example Figure 6a. Combinators for interleaved parsing of fenced code
     //                        blocks.
-    val marker: Parser[Any] = lineEnd ~ "~~~" ~ lineEnd
+    val marker = lineEnd ~ "~~~" ~ lineEnd
 
     // We have two states: Inside the code block and outside the code block
     def inCode[R, S](text: Parser[R], code: Parser[S]): NT[(R, S)] =
@@ -78,7 +78,7 @@ trait Section4 { self: Section3 & RichParsers =>
         | eat { c => inText(text << c, code) })
 
     // Simple variant of balanced parenthesis
-    lazy val parens: NT[Any] = '(' ~ parens ~ ')' | succeed(())
+    lazy val parens: NT[?] = '(' ~ parens ~ ')' | succeed(())
 
     // Blocks of "a"s, such as:
     //
@@ -87,7 +87,7 @@ trait Section4 { self: Section3 & RichParsers =>
     //
     //   aaaaa
     //   aaaaa
-    val as: Parser[Any] = some(many('a') <~ lineEnd)
+    val as = some(many('a') <~ lineEnd)
 
     // Now we can retroactively combine the two parsers `parens` and `as` by
     // The resulting parser can parse for instance words like
@@ -137,11 +137,11 @@ trait Section4 { self: Section3 & RichParsers =>
     // a parser computing the table layout
     def head: Parser[Layout] = some('+' ~> manyCount('-')) <~ '+'
 
-    def body[T](layout: Layout, cell: Parser[T]): Parser[List[List[T]]] =
+    def body[T](layout: Layout, cell: Parser[T]) =
       many(rowLine(layout, layout.map(n => cell)) <~ rowSeparator(layout))
 
     // given a layout, creates a parser for row separators
-    def rowSeparator(layout: Layout): Parser[Any] =
+    def rowSeparator(layout: Layout) =
       layout
         .map { n => List.fill(n)('-').mkString + "+" }
         .foldLeft("+")(_ + _) ~ lineEnd
@@ -157,7 +157,7 @@ trait Section4 { self: Section3 & RichParsers =>
     def delegateCells[T](
         layout: Layout,
         cells: List[Parser[T]]
-    ): List[Parser[Parser[T]]] =
+    ) =
       layout.zip(cells).map { case (n, p) =>
         map(delegateN(n, p), (_ << '\n')) <~ '|'
       }
@@ -179,8 +179,8 @@ trait Section4 { self: Section3 & RichParsers =>
     //   |~~~ |
     //   |aaaa|
     //   +----+
-    lazy val combined: NT[Any] = inText(asAndTables, spaced(parens))
-    lazy val asAndTables: NT[Any] = as | table(combined)
+    lazy val combined: NT[?] = inText(asAndTables, spaced(parens))
+    lazy val asAndTables: NT[?] = as | table(combined)
 
     // Again, some more examples of words that are recognized by `combined` can
     // be found in `DerivativeParsersTests.scala`.
