@@ -40,7 +40,9 @@ trait Parsers {
   // For testing
   def isSuccess[R](p: Parser[R]): Boolean = !isFailure(p)
   def isFailure[R](p: Parser[R]): Boolean = !isSuccess(p)
-  def accepts[R](p: Parser[R], s: Iterable[Elem]): Boolean = isSuccess(feedAll(p, s))
+  def accepts[R](p: Parser[R], s: Iterable[Elem]): Boolean = isSuccess(
+    feedAll(p, s)
+  )
 
   // As optimization
   def always: Parser[Unit]
