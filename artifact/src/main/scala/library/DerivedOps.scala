@@ -17,12 +17,16 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   def some[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+      p :: ps
+    }
     some_v
   }
   def many[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+      p :: ps
+    }
     many_v
   }
 
@@ -59,7 +63,9 @@ trait DerivedOps { self: Parsers & Syntax =>
   // same optimization as above for many and some
   def someSep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(sep ~> some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) => p :: ps }
+    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
+      p :: ps
+    }
     some_v
   }
 
@@ -175,11 +181,10 @@ trait DerivedOps { self: Parsers & Syntax =>
   }
 
   // Greedy repetition
-  def greedyMany[T](p: Parser[T]): Parser[List[T]] =
-    greedySome(p) | succeed(Nil)
+  def greedyMany[T](p: Parser[T]) = greedySome(p) | succeed(Nil)
 
   // Instead of a class use a closure:
-  def greedySome[T]: Parser[T] => Parser[List[T]] = { p =>
+  def greedySome[T]: Parser[T] => NT[List[T]] = { p =>
 
     def withNext(p: Parser[T], ps: Parser[List[T]]): Parser[List[T]] =
       done(p) ~ ps ^^ { case (t, ts) => t :: ts }
