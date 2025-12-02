@@ -24,10 +24,10 @@ trait CharSyntax { self: Parsers & DerivedOps & Syntax =>
 
   sealed trait Stringable[T] { def apply: T => String }
 
-  given Stringable[Char] with { def apply = _.toString }
-  given Stringable[List[Char]] with { def apply = _.mkString }
-  given Stringable[String] with { def apply = identity }
-  given stringList: Stringable[List[String]] with { def apply = _.mkString }
+  given Stringable[Char] { def apply = _.toString }
+  given Stringable[List[Char]] { def apply = _.mkString }
+  given Stringable[String] { def apply = identity }
+  given stringList: Stringable[List[String]] { def apply = _.mkString }
   given [T, U](using st: Stringable[T], su: Stringable[U]): Stringable[(T, U)]
   with {
     def apply = { case (l, r) => st.apply(l) ++ su.apply(r) }
