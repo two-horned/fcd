@@ -101,11 +101,10 @@ trait PythonParsers extends PythonLexemes, PythonAst {
       p: Elem => Boolean,
       thn: Elem => Parser[T],
       els: Elem => Parser[T]
-  ) =
-    eat { c => if (p(c)) thn(c) else els(c) }
+  ) = eat { c => if (p(c)) thn(c) else els(c) }
 
   // Simply preprocesses the input stream and strips out comments
-  def stripComments[T]: Parser[T] => Parser[T] = { p =>
+  def stripComments[T](p: Parser[T]): Parser[T] = {
     lazy val stripped: Parser[T] =
       done(p) | switch(isComment, _ => stripped, c => stripComments(p << c))
     stripped
@@ -121,8 +120,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
 
   val (opening, closing) = (pairs.keys, pairs.values)
 
-  def enclosed[T]: (=> Parser[T]) => Parser[T] =
-    p => oneOf(opening) >> { o => p <~ pairs(o) }
+  def enclosed[T](p: => Parser[T]) = oneOf(opening) >> { o => p <~ pairs(o) }
 
   // non empty Dyck language on these pairs
   lazy val dyck: Parser[Any] = enclosed(many(dyck))
@@ -280,9 +278,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val raise_stmt =
     "raise" ~> spacedOpt(test ~ spacedOpt("from" ␣ test)) ^^ this.Raise.apply
   lazy val import_stmt = import_name | import_from
-  lazy val import_name = "import" ␣> dotted_as_names ^^ { n =>
-    Import(n)
-  }
+  lazy val import_name = "import" ␣> dotted_as_names ^^ { Import(_) }
 
   // # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
   lazy val import_from =
@@ -356,7 +352,8 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val expr: NT[Any] = binOp(xor_expr, "|", this.BinOp.apply)
   lazy val xor_expr: NT[Any] = binOp(and_expr, "^", this.BinOp.apply)
   lazy val and_expr: NT[Any] = binOp(shift_expr, "&", this.BinOp.apply)
-  lazy val shift_expr: NT[Any] = binOp(arith_expr, "<<" | ">>", this.BinOp.apply)
+  lazy val shift_expr: NT[Any] =
+    binOp(arith_expr, "<<" | ">>", this.BinOp.apply)
   lazy val arith_expr: NT[Any] = binOp(term, "+" | "-", this.BinOp.apply)
   lazy val term: NT[Any] =
     binOp(factor, "*" | "@" | "/" | "%" | "//", this.BinOp.apply)
