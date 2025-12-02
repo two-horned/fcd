@@ -16,7 +16,7 @@ trait CharSyntax { self: Parsers & DerivedOps & Syntax =>
   val spaces = many(space)
   val newline = acceptIf(_ == '\n')
 
-  def charRange(from: Char, to: Char) = acceptIf { c => c >= from && c <= to }
+  def charRange(from: Char, to: Char) = acceptIf(c => c >= from && c <= to)
 
   val asciiLetter = charRange('a', 'z') | charRange('A', 'Z')
 
@@ -36,8 +36,7 @@ trait CharSyntax { self: Parsers & DerivedOps & Syntax =>
   given Conversion[String, Parser[String]] = string
   given Conversion[List[Char], String] = _.mkString
 
-  given [T](using st: Stringable[T]): Conversion[Parser[T], Parser[String]] =
-    p => p ^^ st.apply
+  given [T](using st: Stringable[T]): Conversion[Parser[T], Parser[String]] = _ ^^ st.apply
 
   given Conversion[Char, Parser[Char]] = accept
 
