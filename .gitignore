@@ -22,3 +22,6 @@ project
 .bsp
 .bloop
 .scalafmt.conf
+
+# Testing
+test.png
