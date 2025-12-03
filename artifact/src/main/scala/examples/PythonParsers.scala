@@ -94,6 +94,8 @@ trait PythonLexemes { self: Parsers & DerivedOps & Syntax =>
 trait PythonParsers extends PythonLexemes, PythonAst {
   self: Parsers & Syntax & DerivedOps =>
 
+  import Stmt._
+
   // general toolbox
   def no(els: Elem*): Parser[Elem] = acceptIf(el => !(els contains el))
   def no(els: Iterable[Elem]): Parser[Elem] = no(els.toSeq*)
@@ -210,22 +212,22 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   // --- Python Grammar ---
   // see: https://docs.python.org/3.5/reference/grammar.html
   lazy val file_input: NT[Program] =
-    emptyLine.* ~> many(stmt <~ emptyLine.*) <~ EOS ^^ this.Program.apply
+    emptyLine.* ~> many(stmt <~ emptyLine.*) <~ EOS ^^ Program.apply
 
   lazy val decorator: Parser[Decorator] =
     "@" ~> dotted_name ~ ("(" ~> optArgs <~ ")" | succeed(
       Nil
-    )) <~ NL ^^ this.Decorator.apply
+    )) <~ NL ^^ Decorator.apply
   lazy val decorators: Parser[List[Decorator]] = some(decorator)
   lazy val decorated: Parser[Decorated] =
-    decorators ~ (classdef | funcdef | async_funcdef) ^^ this.Decorated.apply
+    decorators ~ (classdef | funcdef | async_funcdef) ^^ Decorated.apply
 
   // --- Functions ---
   lazy val async_funcdef: Parser[FuncDef] = "async" ␣> funcdef
   lazy val funcdef: Parser[FuncDef] =
     "def" ␣> (id ␣ parameters ~ spacedOpt(
       "->" ␣> test
-    )) ␣ (":" ␣> suite) ^^ this.FuncDef.apply
+    )) ␣ (":" ␣> suite) ^^ FuncDef.apply
 
   lazy val parameters = "(" ~> spacedOpt(typedargslist) <␣ ")"
 
@@ -249,7 +251,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   // --- Statements ---
   lazy val stmt: NT[Any] = simple_stmt | compound_stmt
   lazy val simple_stmt =
-    listOf(small_stmt, ";") <␣ NL ^^ this.Simple.apply
+    listOf(small_stmt, ";") <␣ NL ^^ Simple.apply
   lazy val small_stmt =
     (expr_stmt | del_stmt
       | pass_stmt | flow_stmt | import_stmt
@@ -260,23 +262,23 @@ trait PythonParsers extends PythonLexemes, PythonAst {
       | testlist_star_expr ␣ augassign ␣ (yield_expr | testlist)
       | testlist_star_expr ~ some(
         spaces ~> "=" ␣> (yield_expr | testlist_star_expr)
-      )) ^^ this.ExprStmt.apply
+      )) ^^ ExprStmt.apply
 
   lazy val testlist_star_expr = listOf(test | star_expr, ",")
 
   lazy val augassign = ("+=" | "-=" | "*=" | "@=" | "/=" | "%="
     | "&=" | "|=" | "^=" | "<<=" | ">>=" | "**="
     | "//=")
-  lazy val del_stmt = "del" ␣> exprlist ^^ this.Del.apply
+  lazy val del_stmt = "del" ␣> exprlist ^^ Del.apply
   lazy val pass_stmt = "pass" ^^^ Pass
   lazy val flow_stmt =
     break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
   lazy val break_stmt = "break" ^^^ Break
   lazy val continue_stmt = "continue" ^^^ Continue
-  lazy val return_stmt = "return" ~> spacedOpt(testlist) ^^ this.Return.apply
-  lazy val yield_stmt = yield_expr ^^ this.ExprStmt.apply
+  lazy val return_stmt = "return" ~> spacedOpt(testlist) ^^ Return.apply
+  lazy val yield_stmt = yield_expr ^^ ExprStmt.apply
   lazy val raise_stmt =
-    "raise" ~> spacedOpt(test ~ spacedOpt("from" ␣ test)) ^^ this.Raise.apply
+    "raise" ~> spacedOpt(test ~ spacedOpt("from" ␣ test)) ^^ Raise.apply
   lazy val import_stmt = import_name | import_from
   lazy val import_name = "import" ␣> dotted_as_names ^^ { Import(_) }
 
@@ -296,9 +298,9 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val dotted_as_names = someSep(dotted_as_name, ",")
   lazy val dotted_name = someSep(id, ".")
 
-  lazy val global_stmt = "global" ␣> someSep(id, ",") ^^ this.Global.apply
-  lazy val nonlocal_stmt = "nonlocal" ␣> someSep(id, ",") ^^ this.Nonlocal.apply
-  lazy val assert_stmt = "assert" ␣> someSep(test, ",") ^^ this.Assert.apply
+  lazy val global_stmt = "global" ␣> someSep(id, ",") ^^ Global.apply
+  lazy val nonlocal_stmt = "nonlocal" ␣> someSep(id, ",") ^^ Nonlocal.apply
+  lazy val assert_stmt = "assert" ␣> someSep(test, ",") ^^ Assert.apply
 
   lazy val compound_stmt =
     if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt
@@ -349,14 +351,14 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val comp_op = ("<" | ">" | "==" | ">=" | "<=" | "<>" | "!="
     | "in" | "not" ␣ "in" | "is" | "is" ␣ "not")
 
-  lazy val expr: NT[Any] = binOp(xor_expr, "|", this.BinOp.apply)
-  lazy val xor_expr: NT[Any] = binOp(and_expr, "^", this.BinOp.apply)
-  lazy val and_expr: NT[Any] = binOp(shift_expr, "&", this.BinOp.apply)
+  lazy val expr: NT[Any] = binOp(xor_expr, "|", BinOp.apply)
+  lazy val xor_expr: NT[Any] = binOp(and_expr, "^", BinOp.apply)
+  lazy val and_expr: NT[Any] = binOp(shift_expr, "&", BinOp.apply)
   lazy val shift_expr: NT[Any] =
-    binOp(arith_expr, "<<" | ">>", this.BinOp.apply)
-  lazy val arith_expr: NT[Any] = binOp(term, "+" | "-", this.BinOp.apply)
+    binOp(arith_expr, "<<" | ">>", BinOp.apply)
+  lazy val arith_expr: NT[Any] = binOp(term, "+" | "-", BinOp.apply)
   lazy val term: NT[Any] =
-    binOp(factor, "*" | "@" | "/" | "%" | "//", this.BinOp.apply)
+    binOp(factor, "*" | "@" | "/" | "%" | "//", BinOp.apply)
   lazy val factor: NT[Any] = ("+" | "-" | "~") ␣ factor | power
   lazy val power: NT[Any] = atom_expr | atom_expr ␣ "**" ␣ factor
   lazy val atom_expr =
