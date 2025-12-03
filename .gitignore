@@ -21,7 +21,6 @@ project
 .metals
 .bsp
 .bloop
-.scalafmt.conf
 
 # Testing
 test.png
