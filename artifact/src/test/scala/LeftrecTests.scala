@@ -228,13 +228,13 @@ trait LeftrecTests {
       import Term._
 
       lazy val term: NT[Term] =
-        (term ~ "+" ~ fact ^^ { case l ~ op ~ r => BinOp(l, op, r) }
-          | term ~ "-" ~ fact ^^ { case l ~ op ~ r => BinOp(l, op, r) }
+        (term ~ "+" ~ fact ^^ { case ((l, op), r) => BinOp(l, op, r) }
+          | term ~ "-" ~ fact ^^ { case ((l, op), r) => BinOp(l, op, r) }
           | fact)
 
       lazy val fact: NT[Term] =
-        (fact ~ "*" ~ num ^^ { case l ~ op ~ r => BinOp(l, op, r) }
-          | fact ~ "/" ~ num ^^ { case l ~ op ~ r => BinOp(l, op, r) }
+        (fact ~ "*" ~ num ^^ { case ((l, op), r) => BinOp(l, op, r) }
+          | fact ~ "/" ~ num ^^ { case ((l, op), r) => BinOp(l, op, r) }
           | num)
 
       lazy val num: Parser[Num] = some(digit) ^^ (ns => Num(ns.mkString.toInt))
