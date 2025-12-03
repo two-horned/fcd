@@ -243,7 +243,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     // This separation into two fixed points is essential to
     // prevent excessive recomputation.
-    protected object propertiesFix extends Attributed {
+    private object propertiesFix extends Attributed {
       object nullable extends Attribute[Boolean](false, _ || _, implies)
       object empty extends Attribute[Boolean](true, _ && _, follows)
 
@@ -256,7 +256,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       }
     }
 
-    protected object resultsFix extends Attributed {
+    private object resultsFix extends Attributed {
       object results
           extends Attribute[List[R]](
             List(),

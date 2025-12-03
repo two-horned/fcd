@@ -74,7 +74,7 @@ trait Attributed {
        (2) It's been manually set (this.fixed); or
        (3) It needs to be computed (generation < FixedPoint.generation).
        */
-      if (fixed || stabilized || (generation == FixedPoint.generation))
+      if (fixed || stabilized || generation == FixedPoint.generation)
         return currentValue
 
       fix()
@@ -84,8 +84,8 @@ trait Attributed {
   }
 
   // Subsumption tests for attributes:
-  protected def implies(a: Boolean, b: Boolean) = (!a) || b
-  protected def follows(a: Boolean, b: Boolean) = (!b) || a
+  protected def implies(a: Boolean, b: Boolean) = !a || b
+  protected def follows(a: Boolean, b: Boolean) = !b || a
   protected def updateAttributes(): Unit
 
   private def fix() = {
