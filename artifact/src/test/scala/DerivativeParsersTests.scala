@@ -76,20 +76,18 @@ class DerivativeParsersTests
 
     lazy val xs = many(some('x') ~ '\n')
 
-    table(xs) `shouldParse` """+---+
-                            ^|xxx|
-                            ^+---+
-                            ^""".stripMargin('^')
+    table(xs) `shouldParse` "+---+\n|xxx|\n+---+\n"
 
-    table(xs) `shouldParse` """+---+--------+------------+
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^+---+--------+------------+
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^+---+--------+------------+
-                            ^""".stripMargin('^')
+    table(xs) `shouldParse`
+      """+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^""".stripMargin('^')
   }
 
   describe("Table parser with delegation") {
@@ -122,52 +120,57 @@ class DerivativeParsersTests
 
     lazy val xs = many(some('x') ~ '\n')
 
-    table(xs) `shouldParse` """+---+
-                            ^|xxx|
-                            ^+---+
-                            ^""".stripMargin('^')
+    table(xs) `shouldParse`
+      """+---+
+        ^|xxx|
+        ^+---+
+        ^""".stripMargin('^')
 
-    table(xs) `shouldParse` """+---+--------+------------+
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^+---+--------+------------+
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                            ^+---+--------+------------+
-                            ^""".stripMargin('^')
+    table(xs) `shouldParse`
+      """+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^""".stripMargin('^')
 
-    table(xs) `shouldNotParse` """+---+--------+------------+
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^+---x--------+------------+
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^+---+--------+------------+
-                               ^""".stripMargin('^')
+    table(xs) `shouldNotParse`
+      """+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---x--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^""".stripMargin('^')
 
     lazy val nestedTables: NT[Any] = table(xs | nestedTables)
 
-    nestedTables `shouldParse` """+---+--------+------------+
-                               ^|xxx|+-+----+|xxxxxxxxxxxx|
-                               ^|xxx||x|xxxx||xxxxxxxxxxxx|
-                               ^|xxx|+-+----+|xxxxxxxxxxxx|
-                               ^+---+--------+------------+
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                               ^+---+--------+------------+
-                               ^""".stripMargin('^')
+    nestedTables `shouldParse`
+      """+---+--------+------------+
+        ^|xxx|+-+----+|xxxxxxxxxxxx|
+        ^|xxx||x|xxxx||xxxxxxxxxxxx|
+        ^|xxx|+-+----+|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^""".stripMargin('^')
 
-    nestedTables `shouldNotParse` """+---+--------+------------+
-                                  ^|xxx|+-+----+|xxxxxxxxxxxx|
-                                  ^|xxx||x|oxxx||xxxxxxxxxxxx|
-                                  ^|xxx|+-+----+|xxxxxxxxxxxx|
-                                  ^+---+--------+------------+
-                                  ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                                  ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
-                                  ^+---+--------+------------+
-                                  ^""".stripMargin('^')
+    nestedTables `shouldNotParse`
+      """+---+--------+------------+
+        ^|xxx|+-+----+|xxxxxxxxxxxx|
+        ^|xxx||x|oxxx||xxxxxxxxxxxx|
+        ^|xxx|+-+----+|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^|xxx|xxxxxxxx|xxxxxxxxxxxx|
+        ^+---+--------+------------+
+        ^""".stripMargin('^')
 
     // helper that should be in the stdlib
     def zipWith[A, B](l1: List[A => B], l2: List[A]): List[B] =
@@ -293,24 +296,25 @@ class DerivativeParsersTests
     indent(xs) `shouldParse` "  xx\n"
     indent(xs) `shouldParse` "  xxxxx\n"
     indent(xs) `shouldParse` "  xxxxx\n  xxxxxxx\n"
-    indent(xs) `shouldParse` """  xxxxx
-                             |  xxxxxxx
-                             |  xxxxxxxx
-                             |  xxxxxxxxx
-                             |  xxxxxxxxxx
-                             |  xxxxxxxxxxx
-                             |  xxxxxxxxxx
-                             |  xxxxxxxxx
-                             |  xxxxxxxxxx
-                             |  xxxxxxxxxxx
-                             |  xxxxxxxxxxxx
-                             |  xxxxxxxxxxxxx
-                             |  xxxxxxxxxxxxxx
-                             |  xxxxxxxxxxxxxxx
-                             |  xxxxxxxxxxxxxxxx
-                             |  xxxxxxxxxxxxxxx
-                             |  xxxxxxxxxxxxxx
-                             |""".stripMargin('|')
+    indent(xs) `shouldParse`
+      """  xxxxx
+        |  xxxxxxx
+        |  xxxxxxxx
+        |  xxxxxxxxx
+        |  xxxxxxxxxx
+        |  xxxxxxxxxxx
+        |  xxxxxxxxxx
+        |  xxxxxxxxx
+        |  xxxxxxxxxx
+        |  xxxxxxxxxxx
+        |  xxxxxxxxxxxx
+        |  xxxxxxxxxxxxx
+        |  xxxxxxxxxxxxxx
+        |  xxxxxxxxxxxxxxx
+        |  xxxxxxxxxxxxxxxx
+        |  xxxxxxxxxxxxxxx
+        |  xxxxxxxxxxxxxx
+        |""".stripMargin('|')
 
     indent(indent(xs)) `shouldParse` "    xx\n"
     indent(indent(xs)) `shouldParse` "    xxxxx\n"
@@ -351,32 +355,35 @@ class DerivativeParsersTests
     as `shouldParse` "aa\naa\n"
 
     both `shouldParse` "a\n"
-    both `shouldParse` """aaa
-                       |~~~
-                       |()
-                       |~~~
-                       |aaaaa
-                       |""".stripMargin('|')
+    both `shouldParse`
+      """aaa
+        |~~~
+        |()
+        |~~~
+        |aaaaa
+        |""".stripMargin('|')
 
     both `shouldParse` "a  \n\n~~~  \n()\n~~~\naaa\n"
 
-    both `shouldNotParse` """aaa
-                          |~~~
-                          |(
-                          |~~~
-                          |aaaaa
-                          |""".stripMargin('|')
+    both `shouldNotParse`
+      """aaa
+        |~~~
+        |(
+        |~~~
+        |aaaaa
+        |""".stripMargin('|')
 
-    both `shouldParse` """aaa
-                       |~~~
-                       |((())
-                       |~~~
-                       |aaaaa
-                       |
-                       |~~~
-                       |)
-                       |~~~
-                       |""".stripMargin('|')
+    both `shouldParse`
+      """aaa
+        |~~~
+        |((())
+        |~~~
+        |aaaaa
+        |
+        |~~~
+        |)
+        |~~~
+        |""".stripMargin('|')
   }
 
   describe("Unescape") {
@@ -390,42 +397,34 @@ class DerivativeParsersTests
 
   describe("Combined examples") {
     import section_4_2._
-    combined `shouldParse` """aaa
-                           ^""".stripMargin('^')
+    combined `shouldParse`
+      """aaa
+        ^""".stripMargin('^')
 
-    combined `shouldParse` """+----+
-                           ^|aaaa|
-                           ^+----+
-                           ^""".stripMargin('^')
+    combined `shouldParse` "+----+\n|aaaa|\n+----+\n"
+    combined `shouldParse` "+----+\n|aa  |\n+----+\n"
 
-    combined `shouldParse` """+----+
-                           ^|aa  |
-                           ^+----+
-                           ^""".stripMargin('^')
+    combined `shouldParse`
+      """+----+
+        ^|aaaa|
+        ^|~~~ |
+        ^|(())|
+        ^|~~~ |
+        ^|aaaa|
+        ^+----+
+        ^""".stripMargin('^')
 
-    combined `shouldParse` """+----+
-                           ^|aaaa|
-                           ^|~~~ |
-                           ^|(())|
-                           ^|~~~ |
-                           ^|aaaa|
-                           ^+----+
-                           ^""".stripMargin('^')
+    combined `shouldParse` "+----+\n|aa  |\n|aaaa|\n+----+\n"
 
-    combined `shouldParse` """+----+
-                           ^|aa  |
-                           ^|aaaa|
-                           ^+----+
-                           ^""".stripMargin('^')
-
-    combined `shouldParse` """+----+
-                           ^|aa  |
-                           ^|~~~ |
-                           ^|(())|
-                           ^|~~~ |
-                           ^|aaaa|
-                           ^+----+
-                           ^""".stripMargin('^')
+    combined `shouldParse`
+      """+----+
+        ^|aa  |
+        ^|~~~ |
+        ^|(())|
+        ^|~~~ |
+        ^|aaaa|
+        ^+----+
+        ^""".stripMargin('^')
 
   }
 
@@ -593,7 +592,15 @@ class DerivativeParsersTests
       )
     }
     // here we can already observe performance problems (about 400ms):
-    p `shouldParse` "hello '''foo\n\"bar''' test\n foo \" bar'''foo \"\n some content that is not a program, but could be one \n. # ''' some comment \nIt contains newlines \n, \"and some Strings\". Even Multiline strings with '''newlines\n'''."
+    p `shouldParse`
+      """hello '''foo
+        |"bar''' test
+        | foo " bar'''foo "
+        | some content that is not a program, but could be one 
+        |. # ''' some comment 
+        |It contains newlines 
+        |, "and some Strings". Even Multiline strings with '''newlines
+        |'''.""".stripMargin
 
     lazy val noText: Parser[Any] = comment | singleString | multilineString
 
