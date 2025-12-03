@@ -7,7 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 trait NegationTests {
   self: AnyFunSpec & CustomMatchers[RichParsers] =>
 
-  import parsers.{ not as neg, * }
+  import parsers.{not as neg, *}
 
   describe("parser \"not(aa)\"") {
     val p = neg("aa")
