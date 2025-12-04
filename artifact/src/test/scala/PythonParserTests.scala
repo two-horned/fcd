@@ -93,7 +93,8 @@ class PythonParserTests
     val inputWithoutExplicit =
       List[Lexeme](a, NL, a, a, a, "(", a, "[", a, a, NL, a, "]", ")", a)
 
-    val inputResult = List(a, NL, a, a, a, "(", a, "[", a, a, a, "]", ")", a)
+    val inputResult =
+      List[Lexeme](a, NL, a, a, a, "(", a, "[", a, a, a, "]", ")", a)
 
     val collect = consumed(many(any))
 
