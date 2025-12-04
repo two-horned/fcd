@@ -117,12 +117,11 @@ trait Section4 { self: Section3 & RichParsers =>
     //              arbitrary positions.
     //
     // We will use this combinator in the following example
-    def spaced[T]: Parser[T] => Parser[T] = p =>
-      done(p) | eat {
-        case ' '  => spaced(p)
-        case '\n' => spaced(p)
-        case c    => spaced(p << c)
-      }
+    def spaced[T](p: Parser[T]): Parser[T] = done(p) | eat {
+      case ' '  => spaced(p)
+      case '\n' => spaced(p)
+      case c    => spaced(p << c)
+    }
 
     // ### Example Figure 6c. Modular definition of a parser combinator for
     //                        ASCII-tables.

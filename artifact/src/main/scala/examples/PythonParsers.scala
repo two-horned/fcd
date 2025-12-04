@@ -151,7 +151,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   //   backslash that is not part of a string literal or comment, it is joined
   //   with the following forming a single logical line, deleting the backslash
   //   and the following end-of-line character.
-  def explicitJoin[T]: Parser[T] => Parser[T] = p => {
+  def explicitJoin[T](p: Parser[T]): Parser[T] = {
     lazy val join: NT[T] =
       done(p) | switch(
         _ == Punct("\\"),

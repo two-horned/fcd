@@ -448,12 +448,11 @@ class DerivativeParsersTests
       parse(greedySome(some('a')), "") `shouldBe` List()
       parse(greedyMany(some('a')), "") `shouldBe` List(List())
       parse(greedySome(some('a')), "a") `shouldBe` List(List(List('a')))
-      parse(greedySome(some('a')), "aaa") `shouldBe` List(
-        List(List('a', 'a', 'a'))
-      )
+      parse(greedySome(some('a')), "aaa") `shouldBe`
+        List(List(List('a', 'a', 'a')))
     }
 
-    it("should also return longest match if other parser succed first") {
+    it("should also return longest match if other parser succeeded first") {
       lazy val p = some("ab") | some("a") | some("b")
       parse(greedySome(p), "ab") `shouldBe` List(List(List("ab")))
       parse(greedySome(p), "abab") `shouldBe` List(List(List("ab", "ab")))
@@ -538,15 +537,13 @@ class DerivativeParsersTests
       // parser combinator here.
       val cache = mutable.WeakHashMap.empty[Parser[T], Parser[T]]
 
-      def rec: Parser[T] => Parser[T] = p =>
+      def rec(p: Parser[T]): Parser[T] =
         cache.getOrElseUpdate(
           p, {
-
             lazy val dp = delegate(p)
             nonterminal(
               done(p) | biasedAlt(
-                (skip &> dp
-                  | region &> f(dp)) >> rec,
+                (skip &> dp | region &> f(dp)) >> rec,
                 (any &> dp) >> rec
               )
             )

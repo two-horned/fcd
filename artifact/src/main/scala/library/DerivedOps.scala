@@ -107,20 +107,18 @@ trait DerivedOps { self: Parsers & Syntax =>
   // described by the function `f`.
   def repeat[T](f: Parser[T] => Parser[Parser[T]]): Parser[T] => Parser[T] = {
     val cache = scala.collection.mutable.WeakHashMap.empty[Parser[T], Parser[T]]
-    def rec: Parser[T] => Parser[T] = p =>
+    def rec(p: Parser[T]): Parser[T] =
       cache.getOrElseUpdate(
-        p, {
-          done(p) | nonterminal(f(p) >> rec)
-        }
+        p,
+        { done(p) | nonterminal(f(p) >> rec) }
       )
     rec
   }
 
   // repeat is just an instance of repeatAll
-  def repeatAll[T](
-      f: List[Parser[T]] => Parser[List[Parser[T]]]
-  ): List[Parser[T]] => Parser[List[T]] = ps =>
-    collect(ps) | f(ps) >> repeatAll(f)
+  def repeatAll[T](f: List[Parser[T]] => Parser[List[Parser[T]]])(
+      ps: List[Parser[T]]
+  ): Parser[List[T]] = collect(ps) | f(ps) >> repeatAll(f)
 
   private def mkList[T] = (_: ~[T, List[T]]) match { case (x, xs) => x :: xs }
 
@@ -168,10 +166,9 @@ trait DerivedOps { self: Parsers & Syntax =>
     // parser combinator here.
     val cache = scala.collection.mutable.WeakHashMap.empty[Parser[T], Parser[T]]
 
-    def rec: Parser[T] => Parser[T] = p =>
+    def rec(p: Parser[T]): Parser[T] =
       cache.getOrElseUpdate(
         p, {
-
           lazy val dp = delegate(p)
           nonterminal(
             done(p) | biasedAlt(region &> f(dp) >> rec, (any &> dp) >> rec)
