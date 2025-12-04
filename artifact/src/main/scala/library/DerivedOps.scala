@@ -17,17 +17,13 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   def some[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
-      p :: ps
-    }
+    lazy val some_v = seq(p, many_v) ^^ mkList
     some_v
   }
 
   def many[T](p: Parser[T]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
-      p :: ps
-    }
+    lazy val some_v = seq(p, many_v) ^^ mkList
     many_v
   }
 
@@ -49,12 +45,12 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   def manyN[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
-    else p ~ manyN(n - 1, p) ^^ { case (r, rs) => r :: rs }
+    else p ~ manyN(n - 1, p) ^^ mkList
   }
 
   def atMost[T](n: Int, p: Parser[T]): Parser[List[T]] = {
     if (n == 0) succeed(Nil)
-    else (p ~ atMost(n - 1, p) ^^ { case (r, rs) => r :: rs }) | succeed(Nil)
+    else (p ~ atMost(n - 1, p) ^^ mkList) | succeed(Nil)
   }
 
   def manySep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
@@ -64,9 +60,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   // same optimization as above for many and some
   def someSep[T](p: Parser[T], sep: Parser[Any]): Parser[List[T]] = {
     lazy val many_v: NT[List[T]] = alt(sep ~> some_v, succeed(Nil))
-    lazy val some_v: Parser[List[T]] = seq(p, many_v) ^^ { case (p, ps) =>
-      p :: ps
-    }
+    lazy val some_v = seq(p, many_v) ^^ mkList
     some_v
   }
 
@@ -76,9 +70,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   // distributive law - chains a list of parsers
   // --> in Haskell one would use `traverse`
   def distr[T](ps: List[Parser[T]]): Parser[List[T]] =
-    ps.foldRight(succeed[List[T]](Nil)) { (p, l) =>
-      (p ~ l) ^^ { case (a, b) => a :: b }
-    }
+    ps.foldRight(succeed[List[T]](Nil)) { (p, l) => (p ~ l) ^^ mkList }
 
   def join[T](p: Parser[Parser[T]]): Parser[T] = p >> done
 
@@ -120,7 +112,7 @@ trait DerivedOps { self: Parsers & Syntax =>
       ps: List[Parser[T]]
   ): Parser[List[T]] = collect(ps) | f(ps) >> repeatAll(f)
 
-  private def mkList[T] = (_: ~[T, List[T]]) match { case (x, xs) => x :: xs }
+  private def mkList[T](xs: (T, List[T])) = xs._1 :: xs._2
 
   lazy val succeedForever: NT[Unit] = succeed(()) | (any ~> succeedForever)
 
@@ -185,7 +177,7 @@ trait DerivedOps { self: Parsers & Syntax =>
   def greedySome[T]: Parser[T] => NT[List[T]] = { p =>
 
     def withNext(p: Parser[T], ps: Parser[List[T]]) =
-      done(p) ~ ps ^^ { case (t, ts) => t :: ts }
+      done(p) ~ ps ^^ mkList
 
     def forceRead(curr: Parser[T]): Parser[List[T]] =
       withNext(curr, succeed(Nil)) | eat { el =>
