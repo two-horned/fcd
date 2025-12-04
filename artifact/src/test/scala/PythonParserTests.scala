@@ -123,17 +123,8 @@ class PythonParserTests
       EOS
     )
 
-    preprocess(file_input) `shouldParse` List[Lexeme](
-      a,
-      "=",
-      a,
-      ">>",
-      a,
-      "*",
-      a,
-      NL,
-      EOS
-    )
+    preprocess(file_input) `shouldParse`
+      List(a, "=", a, ">>", a, "*", a, NL, EOS)
 
     val sampleProg = List[Lexeme](
       "def",
@@ -784,26 +775,13 @@ class PythonParserTests
       EOS
     )
 
-    aInput `shouldParse` List[Lexeme](
-      "def",
-      NL,
-      WS,
-      WS,
-      a,
-      NL,
-      WS,
-      WS,
-      a,
-      NL,
-      EOS
-    )
-
+    aInput `shouldParse` List("def", NL, WS, WS, a, NL, WS, WS, a, NL, EOS)
     aInput `shouldNotParse` List("def", NL, WS, WS, a, NL, WS, a, NL, EOS)
     aInput `shouldParse` List("def", NL, WS, WS, a, NL, NL, WS, WS, a, NL, EOS)
     aInput `shouldNotParse` List("def", NL, WS, WS, a, NL, NL, WS, a, NL, EOS)
 
-    indentBy(WS ~ WS)(collect) `shouldParseWith` (List[Lexeme](WS, WS, a, NL),
-    List[Lexeme](a, NL))
+    indentBy(WS ~ WS)(collect) `shouldParseWith`
+      (List(WS, WS, a, NL), List(a, NL))
 
     indentBy(WS ~ WS)(collect) `shouldParseWith`
       (List(WS, WS, NL, NL, WS, WS, a, NL), List(NL, NL, a, NL))
