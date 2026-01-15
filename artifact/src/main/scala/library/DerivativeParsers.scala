@@ -346,6 +346,4 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   override def prefix: Parser[Any] => Parser[Unit] = _.prefix
 }
 
-object DerivativeParsers extends RichParsers with DerivativeParsers {
-  override type Elem = Char
-}
+object DerivativeParsers extends RichParsers with DerivativeParsers
