@@ -13,7 +13,7 @@ class PythonParserTests
   import Lexeme._
 
   describe("indented python parser (lexeme based)") {
-    indented(many(many(Id("A")) <~ NL)) `shouldParseWith` (
+    indented(many(many(Id("A")) <~ NL)) shouldParseWith (
       List(WS, WS, Id("A"), Id("A"), NL, WS, WS, Id("A"), NL),
       List(List(Id("A"), Id("A")), List(Id("A")))
     )
@@ -28,22 +28,22 @@ class PythonParserTests
     val a = Id("A")
     val BS = Punct("\\")
 
-    dyck `shouldParse` List[Lexeme]("(", "(", ")", ")")
-    dyck `shouldNotParse` List[Lexeme]("(", "(", ")")
-    extDyck `shouldParse` List("(", a, "(", a, NL, a, ")", a, ")")
-    extDyck `shouldNotParse` List(a, "(", a, "(", a, NL, a, ")", a, ")", a)
+    dyck shouldParse List[Lexeme]("(", "(", ")", ")")
+    dyck shouldNotParse List[Lexeme]("(", "(", ")")
+    extDyck shouldParse List("(", a, "(", a, NL, a, ")", a, ")")
+    extDyck shouldNotParse List(a, "(", a, "(", a, NL, a, ")", a, ")", a)
 
-    implicitJoin(p) `shouldParse` List(a, a, a, a, a)
-    implicitJoin(p) `shouldNotParse` List(a, a, a, NL, a, a)
-    implicitJoin(p) `shouldParse` List(a, a, "(", a, NL, a, ")", a)
-    implicitJoin(p) `shouldNotParse` List(a, a, "(", a, NL, a, a)
-    implicitJoin(p) `shouldNotParse` List(a, a, "(", a, "(", NL, a, ")", a)
-    implicitJoin(p) `shouldParse` List(a, a, "(", a, "(", NL, a, ")", ")", a)
-    implicitJoin(p) `shouldParse` List(a, a, "(", a, "[", NL, a, "]", ")", a)
-    implicitJoin(p) `shouldNotParse` List(a, a, "(", a, "[", NL, a, ")", "]", a)
+    implicitJoin(p) shouldParse List(a, a, a, a, a)
+    implicitJoin(p) shouldNotParse List(a, a, a, NL, a, a)
+    implicitJoin(p) shouldParse List(a, a, "(", a, NL, a, ")", a)
+    implicitJoin(p) shouldNotParse List(a, a, "(", a, NL, a, a)
+    implicitJoin(p) shouldNotParse List(a, a, "(", a, "(", NL, a, ")", a)
+    implicitJoin(p) shouldParse List(a, a, "(", a, "(", NL, a, ")", ")", a)
+    implicitJoin(p) shouldParse List(a, a, "(", a, "[", NL, a, "]", ")", a)
+    implicitJoin(p) shouldNotParse List(a, a, "(", a, "[", NL, a, ")", "]", a)
 
-    explicitJoin(p) `shouldParse` List(a, a, a, BS, NL, a, a)
-    explicitJoin(p) `shouldParse` List(a, a, a, BS, NL, a, a, BS, NL, a, a)
+    explicitJoin(p) shouldParse List(a, a, a, BS, NL, a, a)
+    explicitJoin(p) shouldParse List(a, a, a, BS, NL, a, a, BS, NL, a, a)
 
     val input = List[Lexeme](a, NL, Comment("Hey!!"), a, BS, NL, a, a, "(", a,
       "[", a, BS, NL, a, NL, a, "]", ")", a)
@@ -59,32 +59,32 @@ class PythonParserTests
 
     val collect = consumed(many(any))
 
-    stripComments(collect) `shouldParseWith` (input, inputWithoutComments)
-    explicitJoin(collect) `shouldParseWith`
+    stripComments(collect) shouldParseWith (input, inputWithoutComments)
+    explicitJoin(collect) shouldParseWith
       (inputWithoutComments, inputWithoutExplicit)
-    implicitJoin(collect) `shouldParseWith` (inputWithoutExplicit, inputResult)
+    implicitJoin(collect) shouldParseWith (inputWithoutExplicit, inputResult)
 
-    preprocess(file_input) `shouldParse` List(a, ";", a, "=", "yield", "from",
-      a, "=", a, ";", NL, NL, a, ";", a, NL, EOS)
+    preprocess(file_input) shouldParse List(a, ";", a, "=", "yield", "from", a,
+      "=", a, ";", NL, NL, a, ";", a, NL, EOS)
 
-    preprocess(file_input) `shouldParse`
+    preprocess(file_input) shouldParse
       List(a, "=", a, ">>", a, "*", a, NL, EOS)
 
     val sampleProg = List[Lexeme]("def", WS, Id("fun"), "(", WS, a, WS, ")",
       ":", NL, WS, WS, a, "+=", WS, a, NL, WS, WS, a, "*=", a, NL, EOS)
 
-    parse(stripComments(collect), sampleProg) `shouldBe` List(sampleProg)
-    parse(explicitJoin(collect), sampleProg) `shouldBe` List(sampleProg)
-    parse(implicitJoin(collect), sampleProg) `shouldBe` List(sampleProg)
+    parse(stripComments(collect), sampleProg) shouldBe List(sampleProg)
+    parse(explicitJoin(collect), sampleProg) shouldBe List(sampleProg)
+    parse(implicitJoin(collect), sampleProg) shouldBe List(sampleProg)
 
-    preprocess(file_input) `shouldParse` sampleProg
+    preprocess(file_input) shouldParse sampleProg
 
     val sampleProg2 = List[Lexeme]("def", WS, Id("fun"), "(", NL, WS, a, WS, NL,
       ")", ":", NL, WS, WS, a, "+=", Comment("Test"), BS, NL, WS, a, NL, WS, WS,
       a, "*=", a, NL, EOS)
 
-    parse(preprocess(collect), sampleProg2) `shouldBe` List(sampleProg)
-    preprocess(file_input) `shouldParse` sampleProg2
+    parse(preprocess(collect), sampleProg2) shouldBe List(sampleProg)
+    preprocess(file_input) shouldParse sampleProg2
 
     // https://en.wikibooks.org/wiki/Python_Programming/Decorators
     // format: off
@@ -105,40 +105,40 @@ class PythonParserTests
     )
     // format: on
 
-    argument `shouldParse` List("*", Id("kwargs"))
-    argument `shouldParse` List("**", Id("kwargs"))
-    arglist `shouldParse` List("**", Id("kwargs2"))
-    arglist `shouldParse` List(Id("kwargs"), ",", WS, Id("kwargs"))
-    arglist `shouldParse` List("*", Id("kwargs"), ",", "*", Id("kwargs"))
-    arglist `shouldParse` List("**", Id("kwargs"), ",", "**", Id("kwargs"))
-    arglist `shouldParse` List("*", Id("kwargs"), ",", WS, "*", Id("kwargs"))
-    arglist `shouldParse` List("**", Id("kwargs"), ",", WS, "**", Id("kwargs"))
-    arglist `shouldParse` List("(", Id("args"), ",", WS, Id("kwargs"), ")")
-    arglist `shouldParse` List("(", "*", Id("args"), ",", WS, Id("kwargs"), ")")
+    argument shouldParse List("*", Id("kwargs"))
+    argument shouldParse List("**", Id("kwargs"))
+    arglist shouldParse List("**", Id("kwargs2"))
+    arglist shouldParse List(Id("kwargs"), ",", WS, Id("kwargs"))
+    arglist shouldParse List("*", Id("kwargs"), ",", "*", Id("kwargs"))
+    arglist shouldParse List("**", Id("kwargs"), ",", "**", Id("kwargs"))
+    arglist shouldParse List("*", Id("kwargs"), ",", WS, "*", Id("kwargs"))
+    arglist shouldParse List("**", Id("kwargs"), ",", WS, "**", Id("kwargs"))
+    arglist shouldParse List("(", Id("args"), ",", WS, Id("kwargs"), ")")
+    arglist shouldParse List("(", "*", Id("args"), ",", WS, Id("kwargs"), ")")
 
-    arglist `shouldParse`
+    arglist shouldParse
       List("(", "*", Id("args"), ",", WS, "*", Id("kwargs"), ")")
 
-    test `shouldParse`
+    test shouldParse
       List(Id("f"), "(", Id("args"), ",", WS, Id("kwargs"), ")")
 
-    test `shouldParse`
+    test shouldParse
       List(Id("f"), "(", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")")
 
-    test `shouldParse` List(Id("print"), "(", Str("entering function "), WS,
-      "+", WS, Id("self"), ".", Id("f"), ".", Id("__name__"), ")")
+    test shouldParse List(Id("print"), "(", Str("entering function "), WS, "+",
+      WS, Id("self"), ".", Id("f"), ".", Id("__name__"), ")")
 
     // TODO is already ambiguous
-    // (stmt `parse` List[Lexeme](Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL)).size `shouldBe` 1
+    // (stmt `parse` List[Lexeme](Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL)).size shouldBe 1
 
-    // preprocess(file_input) `shouldParse` traceProg
+    // preprocess(file_input) shouldParse traceProg
 
     // (stmt `parse` List[Lexeme](
     //     "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
-    //     WS, WS, Id("print"), NL)).size `shouldBe` 1
+    //     WS, WS, Id("print"), NL)).size shouldBe 1
 
     // format: off
-    stmt `shouldNotParse` List(
+    stmt shouldNotParse List(
       "def", WS, Id("__call__"), "(", Id("self"), WS, ",", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", ":", NL,
       WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
       WS, WS, WS, WS, Id("print"), NL, // this line is indented too far
@@ -171,8 +171,8 @@ class PythonParserTests
     )
     // format: off
 
-    preprocess(file_input) `shouldParse` traceProg2
-    parse(preprocess(file_input), traceProg2).size `shouldBe` 1
+    preprocess(file_input) shouldParse traceProg2
+    parse(preprocess(file_input), traceProg2).size shouldBe 1
 
     // suite should `parse` this:
     // format: off
@@ -188,8 +188,8 @@ class PythonParserTests
 
     // println((suite `parse` dummyin) mkString "\n\n")
 
-    stmt `shouldNotParse` List(WS, WS, WS, Id("i"), NL)
-    atom `shouldNotParse` List(WS, WS, WS, Id("i"))
+    stmt shouldNotParse List(WS, WS, WS, Id("i"), NL)
+    atom shouldNotParse List(WS, WS, WS, Id("i"))
 
     // This is the skeleton of the python parsers (and it is unambiguous)
     lazy val aStmt: NT[Any] = aSimpleStmt | "def" ~> aBlock
@@ -218,17 +218,17 @@ class PythonParserTests
     )
     // format: on
 
-    aInput `shouldParse` List("def", NL, WS, WS, a, NL, WS, WS, a, NL, EOS)
-    aInput `shouldNotParse` List("def", NL, WS, WS, a, NL, WS, a, NL, EOS)
-    aInput `shouldParse` List("def", NL, WS, WS, a, NL, NL, WS, WS, a, NL, EOS)
-    aInput `shouldNotParse` List("def", NL, WS, WS, a, NL, NL, WS, a, NL, EOS)
+    aInput shouldParse List("def", NL, WS, WS, a, NL, WS, WS, a, NL, EOS)
+    aInput shouldNotParse List("def", NL, WS, WS, a, NL, WS, a, NL, EOS)
+    aInput shouldParse List("def", NL, WS, WS, a, NL, NL, WS, WS, a, NL, EOS)
+    aInput shouldNotParse List("def", NL, WS, WS, a, NL, NL, WS, a, NL, EOS)
 
-    indentBy(WS ~ WS)(collect) `shouldParseWith`
+    indentBy(WS ~ WS)(collect) shouldParseWith
       (List(WS, WS, a, NL), List(a, NL))
 
-    indentBy(WS ~ WS)(collect) `shouldParseWith`
+    indentBy(WS ~ WS)(collect) shouldParseWith
       (List(WS, WS, NL, NL, WS, WS, a, NL), List(NL, NL, a, NL))
 
-    parse(aInput, dummyin2).size `shouldBe` 1
+    parse(aInput, dummyin2).size shouldBe 1
   }
 }

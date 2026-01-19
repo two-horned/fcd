@@ -13,30 +13,30 @@ trait LeftrecTests {
 
     describe("p = p | .") {
       lazy val p: NT[Any] = p | any
-      p `shouldParse` "a"
+      p shouldParse "a"
     }
 
     describe("p = p ~ . | .") {
       lazy val p: NT[Any] = p ~ any | any
-      p `shouldParse` "a"
+      p shouldParse "a"
     }
 
     describe("p = . | p ~ .") {
       lazy val p: NT[Any] = any | p ~ any
-      p `shouldParse` "a"
+      p shouldParse "a"
     }
 
     describe("p = (. | .) >> { (. | p) ^^ id }") {
       lazy val p: NT[Any] = (p | any) >> { _ => (any | p) ^^ identity }
-      p `shouldParse` "aa"
-      p `shouldParse` "aaaaa"
+      p shouldParse "aa"
+      p shouldParse "aaaaa"
     }
 
     describe("p = (. | p) >> { a }") {
       lazy val p: NT[Any] = (any | p) >> { _ => 'a' }
-      p `shouldParse` "aa"
-      p `shouldParse` "aaa"
-      p `shouldParse` "aaaaaa"
+      p shouldParse "aa"
+      p shouldParse "aaa"
+      p shouldParse "aaaaaa"
     }
   }
 
@@ -44,12 +44,12 @@ trait LeftrecTests {
 
     describe("p = . ~ p") {
       lazy val p: NT[Any] = any ~ p
-      p `shouldNotParse` "a"
+      p shouldNotParse "a"
     }
 
     describe("p = p ~ .") {
       lazy val p: NT[Any] = p ~ any
-      p `shouldNotParse` "a"
+      p shouldNotParse "a"
     }
   }
 
@@ -58,17 +58,17 @@ trait LeftrecTests {
     describe("A = A ~ a | empty") {
       lazy val A: NT[Any] = A ~ 'a' | succ(42)
 
-      A `shouldParse` ""
-      A `shouldParse` "a"
-      A `shouldParse` "aa"
+      A shouldParse ""
+      A shouldParse "a"
+      A shouldParse "aa"
     }
 
     describe("A = empty | A ~ a ") {
       lazy val A: NT[Any] = succ(42) | A ~ 'a'
 
-      A `shouldParse` ""
-      A `shouldParse` "a"
-      A `shouldParse` "aa"
+      A shouldParse ""
+      A shouldParse "a"
+      A shouldParse "aa"
     }
 
     // Simple example of indirect leftrecursion from
@@ -78,15 +78,15 @@ trait LeftrecTests {
       lazy val A: NT[Any] = B ~ '-' ~ num | num
       lazy val B: NT[Any] = succ(()) ~ A
 
-      // A `shouldParse` "1"
-      // A `shouldParse` "12"
-      // A `shouldParse` "12-32"
-      // A `shouldParse` "12-32-45"
+      // A shouldParse "1"
+      // A shouldParse "12"
+      // A shouldParse "12-32"
+      // A shouldParse "12-32-45"
 
-      B `shouldParse` "1"
-      B `shouldParse` "12"
-      B `shouldParse` "12-32"
-      B `shouldParse` "12-32-45"
+      B shouldParse "1"
+      B shouldParse "12"
+      B shouldParse "12-32"
+      B shouldParse "12-32-45"
     }
 
     describe("two levels indirect leftrecursion") {
@@ -95,16 +95,16 @@ trait LeftrecTests {
       lazy val B: NT[Any] = succ(()) ~ C ~ '+' ~ num
       lazy val C: NT[Any] = succ(()) ~ A
 
-      A `shouldParse` "1"
-      A `shouldParse` "12"
-      C `shouldParse` "2"
-      C `shouldParse` "22"
-      B `shouldParse` "12+32"
-      A `shouldParse` "12+32-42"
-      A `shouldParse` "12+12-32+45-44"
-      A `shouldNotParse` ""
-      A `shouldNotParse` "12+13+14"
-      A `shouldNotParse` "12+13+14-14-56"
+      A shouldParse "1"
+      A shouldParse "12"
+      C shouldParse "2"
+      C shouldParse "22"
+      B shouldParse "12+32"
+      A shouldParse "12+32-42"
+      A shouldParse "12+12-32+45-44"
+      A shouldNotParse ""
+      A shouldNotParse "12+13+14"
+      A shouldNotParse "12+13+14-14-56"
     }
 
     // From "Packrat parsers can support left-recursion"
@@ -112,32 +112,32 @@ trait LeftrecTests {
       lazy val start: NT[Any] = ones ~ '2' | '1' ~ start | succ(())
       lazy val ones: NT[Any] = ones ~ '1' | '1'
 
-      start `shouldParse` ""
-      start `shouldParse` "1"
-      start `shouldParse` "12"
-      start `shouldParse` "11112"
-      start `shouldParse` "111111"
-      start `shouldParse` "1111112"
+      start shouldParse ""
+      start shouldParse "1"
+      start shouldParse "12"
+      start shouldParse "11112"
+      start shouldParse "111111"
+      start shouldParse "1111112"
 
       // Actually computing the result triggers a stackoverflow
-      // start `shouldParse` ("1" * 200)
+      // start shouldParse ("1" * 200)
     }
 
     describe("A = A ~ b | c") {
       lazy val A: NT[Any] = A ~ 'b' | 'c'
 
-      A `shouldParse` "c"
-      A `shouldParse` "cb"
-      A `shouldParse` "cbb"
-      A `shouldParse` "cbbbbbbbbbbbbb"
-      A `shouldNotParse` "cbbbbbbbbbbbbbc"
+      A shouldParse "c"
+      A shouldParse "cb"
+      A shouldParse "cbb"
+      A shouldParse "cbbbbbbbbbbbbb"
+      A shouldNotParse "cbbbbbbbbbbbbbc"
     }
 
     describe("A = empty ~ A ~ b | empty") {
       lazy val A: NT[Any] = succ("done") ~ A ~ 'b' | succ("done")
-      A `shouldParse` ""
-      A `shouldParse` "b"
-      A `shouldParse` "bb"
+      A shouldParse ""
+      A shouldParse "b"
+      A shouldParse "bb"
     }
 
     // should parse at most as many 'd's as it parses 'b's.
@@ -145,24 +145,24 @@ trait LeftrecTests {
       lazy val A: NT[Char] = B ~> A <~ 'b' | 'c'
       lazy val B: NT[Any] = 'd' | succ("done")
 
-      A `shouldParse` "c"
-      A `shouldParse` "cb"
-      A `shouldParse` "dcb"
-      A `shouldParse` "cbb"
-      A `shouldParse` "ddcbb"
-      A `shouldNotParse` "dddcb"
-      A `shouldParse` "dddddcbbbbbbbbbbbbb"
+      A shouldParse "c"
+      A shouldParse "cb"
+      A shouldParse "dcb"
+      A shouldParse "cbb"
+      A shouldParse "ddcbb"
+      A shouldNotParse "dddcb"
+      A shouldParse "dddddcbbbbbbbbbbbbb"
     }
 
     describe("many(some(a))") {
       lazy val p = many(some('a'))
 
-      p `shouldParse` ""
-      p `shouldParse` "a"
-      p `shouldParse` "aaa"
-      p `shouldParse` "aaaaaaaaaa"
-      p `shouldNotParse` "b"
-      p `shouldNotParse` "aaab"
+      p shouldParse ""
+      p shouldParse "a"
+      p shouldParse "aaa"
+      p shouldParse "aaaaaaaaaa"
+      p shouldNotParse "b"
+      p shouldNotParse "aaab"
     }
 
     describe("del(ones)") {
@@ -179,21 +179,21 @@ trait LeftrecTests {
       lazy val rr: NT[String] = "1" ~> rr | "1"
       lazy val ll: NT[String] = ll <~ "1" | "1"
 
-      ll `shouldParse` ("1" `repeat` 40)
-      rr `shouldParse` ("1" `repeat` 41)
+      ll shouldParse "1".repeat(40)
+      rr shouldParse "1".repeat(41)
     }
 
     // Grammar from Tillmann Rendel's GLL library
     describe("very ambiguous") {
       lazy val A: NT[Char] = A ~> A | A ~> A ~> A | 'a'
-      A `shouldNotParse` ""
-      A `shouldParse` "a"
-      A `shouldParse` "aa"
-      A `shouldParse` "aaa"
-      A `shouldParse` ("a" `repeat` 100)
+      A shouldNotParse ""
+      A shouldParse "a"
+      A shouldParse "aa"
+      A shouldParse "aaa"
+      A shouldParse "a".repeat(100)
 
       lazy val A2: Parser[Any] = some(some('a'))
-      A2 `shouldParse` ("a" `repeat` 1000)
+      A2 shouldParse "a".repeat(1000)
     }
 
     describe("mixed mutual recursion") {
@@ -210,13 +210,13 @@ trait LeftrecTests {
 
       lazy val arrayEl: NT[Any] = expression | succ("undefined")
 
-      expression `shouldParse` ""
-      expression `shouldParse` "a"
-      expression `shouldParse` "aaaaa"
-      expression `shouldParse` "["
-      expression `shouldParse` "[a"
-      expression `shouldParse` "[aaaaa"
-      expression `shouldParse` "[[[[a"
+      expression shouldParse ""
+      expression shouldParse "a"
+      expression shouldParse "aaaaa"
+      expression shouldParse "["
+      expression shouldParse "[a"
+      expression shouldParse "[aaaaa"
+      expression shouldParse "[[[[a"
     }
 
     describe("terms") {
@@ -239,9 +239,9 @@ trait LeftrecTests {
 
       lazy val num: Parser[Num] = some(digit) ^^ (ns => Num(ns.mkString.toInt))
 
-      num `shouldParse` "12345"
-      term `shouldParse` "12+31"
-      term `shouldParse` "12*8+31*45"
+      num shouldParse "12345"
+      term shouldParse "12+31"
+      term shouldParse "12*8+31*45"
     }
 
     // Grammar and testcases from Tillmann Rendel's GLL library.
@@ -250,44 +250,44 @@ trait LeftrecTests {
       lazy val S: NT[Any] = many(az | ' ' | ':' | ':' ~ P | '(' ~ S ~ ')')
       lazy val P: NT[Any] = alt('(', ')')
 
-      S `shouldParse` ""
-      S `shouldNotParse` ":(("
-      S `shouldParse` "i am sick today (:()"
-      S `shouldParse` "(:)"
-      S `shouldParse` "hacker cup: started :):)"
-      S `shouldNotParse` ")("
-      S `shouldNotParse` "(((a)):()a(()(((:))a((:)():(((()()a)))(:a(::)(a)))(a)((a::():(a)():)a(a(a(:aa(:()(a(((((()))))))))"
-      S `shouldParse` "():)((()():(:())))::aa((((:(((:)))::a:(:))()a)):(a):::((()a((a(aa(():))(():())((::a)a)):)()"
-      S `shouldParse` ":(a):(:)aa)a(:()::():))a:aaa:)(:)((()()))a()(((()(:)))(:(aa:()())())a((a)a:(:()))(a((():)))"
-      S `shouldParse` ":a:)(:))()(()()a)aaa::a()()a:()()a::)((()(a(a))))try implementing sleep sort if you are stuck:(:)a)"
-      S `shouldNotParse` "(a())(::)(a))():(((a(()(:))a(:)))(:(:(:((():)(a))(:))(a)():(:(()aa):)(a((())a)a((a):)()(:("
-      S `shouldParse` "(::a((a)a:()):):a)aa:)a(:::))(a())aa(a():))(:)a)((():)(:a:)a))):a(a)((:()(()())a))()a((()a))"
-      S `shouldParse` "()(((a)((aa)))a)a()(a)(aa:a)()(((:())aa)):()():():a:(a)(a())a:)::a:(aa:):()((a:)())aa)a(a:)"
-      S `shouldParse` ":)()((a)):(():a:a:)(:a)):)(()(:)::::(a(::a())(a):(:((((:(aa(()))a)(((((((((()a()a):)))((:)))))))))"
-      S `shouldParse` "a(a)::(((::)))())((a)(:((:a())):((::(:()(a)))i am trapped in a test case generator :(:(a(:::))"
-      S `shouldParse` "((:):::(()()):)(()()():())aaa)(:(a:)a:((())a(((a(:())aa():a:)((()):)(()(:)(a())a:()a)a():("
-      S `shouldNotParse` "(:a))"
-      S `shouldParse` "::((:))(((:)(aaa)(a())()(a:)(:)(:)()):)a())aa)())(():a):()::):)a()())a()):):(:a)a):()(a)(a)"
-      S `shouldParse` "()a(:)(a:a):(())):a()():((a(:):a()()::)(a:)(()a((a:)(a)a(a:a:)(a)a(a:(()()()::a()a()(()a:())))"
-      S `shouldParse` "()((:a(a()()a))())((:a(:a)(()a((((a((a(()(:aa()()()))):)(():):)(:(a))():(())(():()):):(()a))"
-      S `shouldParse` "(((((((((())))))))))"
-      S `shouldParse` "(((((((((((((((((((())))))))))))))))))))"
-      S `shouldParse` "((((((((((:))))))))))"
-      S `shouldParse` "((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
-      S `shouldNotParse` "(((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
-      S `shouldParse` "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
-      S `shouldParse` "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:))))))))))"
-      S `shouldParse` "((((((((((((:))))))))))((((((((((:())))))))))))"
-      S `shouldNotParse` "(((((((((()))))))))))"
-      S `shouldNotParse` "(((((((((((((((((((()))))))))))))))))))))"
-      S `shouldParse` "((((((((((:)))))))))))"
-      S `shouldParse` "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:)))))))))))))))))))))))))))))))))))))))))))))))))))"
-      S `shouldParse` "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))))"
-      S `shouldParse` "((((((((((((:))))))))))((((((((((:)))))))))))))"
-      S `shouldNotParse` "((((((((((:))))))))))))"
-      S `shouldNotParse` "((((((((((((:))))))))))((((((((((:)))))))))))))))"
-      S `shouldNotParse` "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))))))))))"
-      S `shouldNotParse` "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))))))"
+      S shouldParse ""
+      S shouldNotParse ":(("
+      S shouldParse "i am sick today (:()"
+      S shouldParse "(:)"
+      S shouldParse "hacker cup: started :):)"
+      S shouldNotParse ")("
+      S shouldNotParse "(((a)):()a(()(((:))a((:)():(((()()a)))(:a(::)(a)))(a)((a::():(a)():)a(a(a(:aa(:()(a(((((()))))))))"
+      S shouldParse "():)((()():(:())))::aa((((:(((:)))::a:(:))()a)):(a):::((()a((a(aa(():))(():())((::a)a)):)()"
+      S shouldParse ":(a):(:)aa)a(:()::():))a:aaa:)(:)((()()))a()(((()(:)))(:(aa:()())())a((a)a:(:()))(a((():)))"
+      S shouldParse ":a:)(:))()(()()a)aaa::a()()a:()()a::)((()(a(a))))try implementing sleep sort if you are stuck:(:)a)"
+      S shouldNotParse "(a())(::)(a))():(((a(()(:))a(:)))(:(:(:((():)(a))(:))(a)():(:(()aa):)(a((())a)a((a):)()(:("
+      S shouldParse "(::a((a)a:()):):a)aa:)a(:::))(a())aa(a():))(:)a)((():)(:a:)a))):a(a)((:()(()())a))()a((()a))"
+      S shouldParse "()(((a)((aa)))a)a()(a)(aa:a)()(((:())aa)):()():():a:(a)(a())a:)::a:(aa:):()((a:)())aa)a(a:)"
+      S shouldParse ":)()((a)):(():a:a:)(:a)):)(()(:)::::(a(::a())(a):(:((((:(aa(()))a)(((((((((()a()a):)))((:)))))))))"
+      S shouldParse "a(a)::(((::)))())((a)(:((:a())):((::(:()(a)))i am trapped in a test case generator :(:(a(:::))"
+      S shouldParse "((:):::(()()):)(()()():())aaa)(:(a:)a:((())a(((a(:())aa():a:)((()):)(()(:)(a())a:()a)a():("
+      S shouldNotParse "(:a))"
+      S shouldParse "::((:))(((:)(aaa)(a())()(a:)(:)(:)()):)a())aa)())(():a):()::):)a()())a()):):(:a)a):()(a)(a)"
+      S shouldParse "()a(:)(a:a):(())):a()():((a(:):a()()::)(a:)(()a((a:)(a)a(a:a:)(a)a(a:(()()()::a()a()(()a:())))"
+      S shouldParse "()((:a(a()()a))())((:a(:a)(()a((((a((a(()(:aa()()()))):)(():):)(:(a))():(())(():()):):(()a))"
+      S shouldParse "(((((((((())))))))))"
+      S shouldParse "(((((((((((((((((((())))))))))))))))))))"
+      S shouldParse "((((((((((:))))))))))"
+      S shouldParse "((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
+      S shouldNotParse "(((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
+      S shouldParse "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))"
+      S shouldParse "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:))))))))))"
+      S shouldParse "((((((((((((:))))))))))((((((((((:())))))))))))"
+      S shouldNotParse "(((((((((()))))))))))"
+      S shouldNotParse "(((((((((((((((((((()))))))))))))))))))))"
+      S shouldParse "((((((((((:)))))))))))"
+      S shouldParse "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:)))))))))))))))))))))))))))))))))))))))))))))))))))"
+      S shouldParse "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))))"
+      S shouldParse "((((((((((((:))))))))))((((((((((:)))))))))))))"
+      S shouldNotParse "((((((((((:))))))))))))"
+      S shouldNotParse "((((((((((((:))))))))))((((((((((:)))))))))))))))"
+      S shouldNotParse "((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))) ((((((((((:)))))))))))))))))"
+      S shouldNotParse "(a((f((g(((g((:))))g))))))::((((((((((((((((((((:)))))))))))))))))))) ((((((((((((((((((((((((((((((((((((((((((((((((((:))))))))))))))))))))))))))))))))))))))))))))))))))))))"
     }
 
     // This is grammar Γ₁ from Scott and Johnstone (2010, Sec. 5).
@@ -297,13 +297,13 @@ trait LeftrecTests {
       lazy val B: NT[Any] = succ(()) | 'a'
       lazy val C: NT[Any] = 'b' | B ~ C ~ 'b' | 'b' ~ 'b'
 
-      S `shouldNotParse` ""
-      S `shouldNotParse` "aba"
-      S `shouldParse` "d"
-      S `shouldParse` "ba"
-      S `shouldParse` "bba"
-      S `shouldParse` "abba"
-      S `shouldParse` "aabbba"
+      S shouldNotParse ""
+      S shouldNotParse "aba"
+      S shouldParse "d"
+      S shouldParse "ba"
+      S shouldParse "bba"
+      S shouldParse "abba"
+      S shouldParse "aabbba"
     }
   }
 }

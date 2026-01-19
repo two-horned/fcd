@@ -12,18 +12,18 @@ trait CustomMatchers[+P <: Parsers](val parsers: P) extends Matchers {
   import parsers.{Elem, Parser, accepts, isSuccess, parse}
 
   extension [T](p: => Parser[T]) {
-    def shouldParse(s: Iterable[Elem], tags: Tag*) =
+    infix def shouldParse(s: Iterable[Elem], tags: Tag*) =
       it(s"""should parse "$s" """, tags*) {
-        accepts(p, s) `shouldBe` true
+        accepts(p, s) shouldBe true
       }
-    def shouldNotParse(s: Iterable[Elem], tags: Tag*) =
+    infix def shouldNotParse(s: Iterable[Elem], tags: Tag*) =
       it(s"""should not parse "$s" """, tags*) {
-        accepts(p, s) `shouldBe` false
+        accepts(p, s) shouldBe false
       }
     // for unambiguous parses
-    def shouldParseWith(s: Iterable[Elem], result: T) =
+    infix def shouldParseWith(s: Iterable[Elem], result: T) =
       it(s"""should parse "$s" with correct result""") {
-        parse(p, s) `shouldBe` List(result)
+        parse(p, s) shouldBe List(result)
       }
   }
 
