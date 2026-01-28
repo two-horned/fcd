@@ -21,6 +21,7 @@ project
 .metals
 .bsp
 .bloop
+.vagrant
 
 # Testing
 test.png
