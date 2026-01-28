@@ -310,9 +310,8 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     "if" ␣> test ␣ (":" ␣> suite ~
       spacedMany("elif" ␣> test ␣ (":" ␣> suite)) ~
       spacedOpt(("else" ␣ ":") ␣> suite))
-  lazy val while_stmt = "while" ␣> test ␣ (":" ␣> suite ~ spacedOpt(
-    ("else" ␣ ":") ␣> suite
-  ))
+  lazy val while_stmt =
+    "while" ␣> test ␣ (":" ␣> suite ~ spacedOpt(("else" ␣ ":") ␣> suite))
   lazy val for_stmt =
     "for" ␣> exprlist ␣ ("in" ␣> testlist ␣ (":" ␣> suite ~ spacedOpt(
       ("else" ␣> ":") ␣> suite
