@@ -67,8 +67,8 @@ trait PythonLexemes { self: Parsers & DerivedOps & Syntax =>
   type Elem = Lexeme
 
   given lex: Conversion[Elem, Parser[Elem]] = accept(_)
-  given kw: Conversion[Symbol, Parser[Elem]] = { kw => accept(KW(kw.name)) }
-  given punct: Conversion[String, Parser[Elem]] = { p => accept(Punct(p)) }
+  given kw: Conversion[String, Parser[Elem]] = kw => accept(KW(kw))
+  given punct: Conversion[Char, Parser[Elem]] = p => accept(Punct(p.toString))
 
   lazy val string = any >> {
     case s: Str => succeed(s)
@@ -215,7 +215,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     emptyLine.* ~> many(stmt <~ emptyLine.*) <~ EOS ^^ Program.apply
 
   lazy val decorator: Parser[Decorator] =
-    "@" ~> dotted_name ~ ("(" ~> optArgs <~ ")" | succeed(
+    '@' ~> dotted_name ~ ('(' ~> optArgs <~ ')' | succeed(
       Nil
     )) <~ NL ^^ Decorator.apply
   lazy val decorators: Parser[List[Decorator]] = some(decorator)
@@ -226,32 +226,32 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   lazy val async_funcdef: Parser[FuncDef] = "async" ␣> funcdef
   lazy val funcdef: Parser[FuncDef] =
     "def" ␣> (id ␣ parameters ~ spacedOpt(
-      "->" ␣> test
-    )) ␣ (":" ␣> suite) ^^ FuncDef.apply
+      Punct("->") ␣> test
+    )) ␣ (':' ␣> suite) ^^ FuncDef.apply
 
-  lazy val parameters = "(" ~> spacedOpt(typedargslist) <␣ ")"
+  lazy val parameters = '(' ~> spacedOpt(typedargslist) <␣ ')'
 
   // ['*' [tfpdef] (',' tfpdef ['=' test])* [',' '**' tfpdef] | '**' tfpdef]
   def fpdef(p: Parser[Any]): Parser[Any] =
-    ("*" ~ spacedOpt(p)
-      ~ spacedOpt("," ␣> testdefs(p))
-      ~ spacedOpt("," ␣> ("**" ␣ p))
-      | "**" ␣ p)
-  def testdefs(p: Parser[Any]) = someSep(p ~ spacedOpt("=" ␣> test), ",")
+    ('*' ~ spacedOpt(p)
+      ~ spacedOpt(',' ␣> testdefs(p))
+      ~ spacedOpt(',' ␣> (Punct("**") ␣ p))
+      | Punct("**") ␣ p)
+  def testdefs(p: Parser[Any]) = someSep(p ~ spacedOpt('=' ␣> test), ',')
 
   lazy val typedargslist =
-    testdefs(tfpdef) ~ spacedOpt("," ␣> fpdef(tfpdef)) | fpdef(tfpdef)
+    testdefs(tfpdef) ~ spacedOpt(',' ␣> fpdef(tfpdef)) | fpdef(tfpdef)
 
   lazy val varargslist =
-    testdefs(vfpdef) ~ spacedOpt("," ␣> fpdef(vfpdef)) | fpdef(vfpdef)
+    testdefs(vfpdef) ~ spacedOpt(',' ␣> fpdef(vfpdef)) | fpdef(vfpdef)
 
-  lazy val tfpdef = id ~ spacedOpt(":" ␣> test)
+  lazy val tfpdef = id ~ spacedOpt(':' ␣> test)
   lazy val vfpdef = id
 
   // --- Statements ---
   lazy val stmt: NT[Any] = simple_stmt | compound_stmt
   lazy val simple_stmt =
-    listOf(small_stmt, ";") <␣ NL ^^ Simple.apply
+    listOf(small_stmt, ';') <␣ NL ^^ Simple.apply
   lazy val small_stmt =
     (expr_stmt | del_stmt
       | pass_stmt | flow_stmt | import_stmt
@@ -261,14 +261,15 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     (testlist_star_expr
       | testlist_star_expr ␣ augassign ␣ (yield_expr | testlist)
       | testlist_star_expr ~ some(
-        spaces ~> "=" ␣> (yield_expr | testlist_star_expr)
+        spaces ~> '=' ␣> (yield_expr | testlist_star_expr)
       )) ^^ ExprStmt.apply
 
-  lazy val testlist_star_expr = listOf(test | star_expr, ",")
+  lazy val testlist_star_expr = listOf(test | star_expr, ',')
 
-  lazy val augassign = ("+=" | "-=" | "*=" | "@=" | "/=" | "%="
-    | "&=" | "|=" | "^=" | "<<=" | ">>=" | "**="
-    | "//=")
+  lazy val augassign = (Punct("+=") | Punct("-=") | Punct("*=") | Punct(
+    "@=") | Punct("/=") | Punct("%=")
+    | Punct("&=") | Punct("|=") | Punct("^=") | Punct("<<=") | Punct(
+      ">>=") | Punct("**=") | Punct("//="))
   lazy val del_stmt = "del" ␣> exprlist ^^ Del.apply
   lazy val pass_stmt = "pass" ^^^ Pass
   lazy val flow_stmt =
@@ -284,46 +285,46 @@ trait PythonParsers extends PythonLexemes, PythonAst {
 
   // # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
   lazy val import_from =
-    ("from" ~> (spacedMany("." | "...") ~ dotted_name | some(
-      "." | "..."
+    ("from" ~> (spacedMany('.' | Punct("...")) ~ dotted_name | some(
+      '.' | Punct("...")
     )) ␣
       "import"
-      ␣> ("*" | "(" ␣> import_as_names <␣ ")" | import_as_names)) ^^ {
+      ␣> ('*' | '(' ␣> import_as_names <␣ ')' | import_as_names)) ^^ {
       case (from, names) => Import(names, Some(from))
     }
 
   lazy val import_as_name = id ~ spacedOpt("as" ␣ id)
   lazy val dotted_as_name = dotted_name ~ spacedOpt("as" ␣ id)
-  lazy val import_as_names = listOf(test | import_as_name, ",")
-  lazy val dotted_as_names = someSep(dotted_as_name, ",")
-  lazy val dotted_name = someSep(id, ".")
+  lazy val import_as_names = listOf(test | import_as_name, ',')
+  lazy val dotted_as_names = someSep(dotted_as_name, ',')
+  lazy val dotted_name = someSep(id, '.')
 
-  lazy val global_stmt = "global" ␣> someSep(id, ",") ^^ Global.apply
-  lazy val nonlocal_stmt = "nonlocal" ␣> someSep(id, ",") ^^ Nonlocal.apply
-  lazy val assert_stmt = "assert" ␣> someSep(test, ",") ^^ Assert.apply
+  lazy val global_stmt = "global" ␣> someSep(id, ',') ^^ Global.apply
+  lazy val nonlocal_stmt = "nonlocal" ␣> someSep(id, ',') ^^ Nonlocal.apply
+  lazy val assert_stmt = "assert" ␣> someSep(test, ',') ^^ Assert.apply
 
   lazy val compound_stmt =
     if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt
   lazy val async_stmt =
     "async" ␣> (funcdef | with_stmt | for_stmt)
   lazy val if_stmt =
-    "if" ␣> test ␣ (":" ␣> suite ~
-      spacedMany("elif" ␣> test ␣ (":" ␣> suite)) ~
-      spacedOpt(("else" ␣ ":") ␣> suite))
+    "if" ␣> test ␣ (':' ␣> suite ~
+      spacedMany("elif" ␣> test ␣ (':' ␣> suite)) ~
+      spacedOpt(("else" ␣ ':') ␣> suite))
   lazy val while_stmt =
-    "while" ␣> test ␣ (":" ␣> suite ~ spacedOpt(("else" ␣ ":") ␣> suite))
+    "while" ␣> test ␣ (':' ␣> suite ~ spacedOpt(("else" ␣ ':') ␣> suite))
   lazy val for_stmt =
-    "for" ␣> exprlist ␣ ("in" ␣> testlist ␣ (":" ␣> suite ~ spacedOpt(
-      ("else" ␣> ":") ␣> suite
+    "for" ␣> exprlist ␣ ("in" ␣> testlist ␣ (':' ␣> suite ~ spacedOpt(
+      ("else" ␣> ':') ␣> suite
     ))) ^^ { case (exprs, (tests, (body, default))) =>
       For(exprs, tests, body, default)
     }
   lazy val try_stmt =
-    ("try" ␣ ":") ␣> suite ␣ (some(except_clause ␣ (":" ␣> suite)) ~
-      spacedOpt(("else" ␣ ":") ␣> suite) ~
-      spacedOpt(("finally" ␣ ":") ␣> suite)
-      | (("finally" ␣ ":") ␣> suite))
-  lazy val with_stmt = "with" ␣> someSep(with_item, ",") ␣ (":" ␣> suite)
+    ("try" ␣ ':') ␣> suite ␣ (some(except_clause ␣ (':' ␣> suite)) ~
+      spacedOpt(("else" ␣ ':') ␣> suite) ~
+      spacedOpt(("finally" ␣ ':') ␣> suite)
+      | (("finally" ␣ ':') ␣> suite))
+  lazy val with_stmt = "with" ␣> someSep(with_item, ',') ␣ (':' ␣> suite)
   lazy val with_item = test ~ spacedOpt("as" ␣> expr)
 
   // # NB compile.c makes sure that the default except clause is last
@@ -338,69 +339,70 @@ trait PythonParsers extends PythonLexemes, PythonAst {
     (or_test ~ spacedOpt("if" ␣> or_test ␣ ("else" ␣> test))
       | lambdef)
   lazy val test_nocond: NT[Any] = or_test | lambdef_nocond
-  lazy val lambdef: NT[Any] = "lambda" ~> spacedOpt(varargslist) ␣ (":" ␣> test)
+  lazy val lambdef: NT[Any] = "lambda" ~> spacedOpt(varargslist) ␣ (':' ␣> test)
   lazy val lambdef_nocond: NT[Any] =
-    "lambda" ~> spacedOpt(varargslist) ␣ (":" ␣> test_nocond)
+    "lambda" ~> spacedOpt(varargslist) ␣ (':' ␣> test_nocond)
   lazy val or_test: NT[Any] = someSep(and_test, "or")
   lazy val and_test: NT[Any] = someSep(not_test, "and")
   lazy val not_test: NT[Any] = "not" ␣> not_test | comparison
   lazy val comparison: NT[Any] = someSep(expr, comp_op)
   // # <> isn't actually a valid comparison operator in Python. It's here for the
   // # sake of a __future__ import described in PEP 401 (which really works :-)
-  lazy val comp_op = ("<" | ">" | "==" | ">=" | "<=" | "<>" | "!="
-    | "in" | "not" ␣ "in" | "is" | "is" ␣ "not")
+  lazy val comp_op =
+    Punct("<") | ">" | Punct("==") | Punct(">=") | Punct("<=") | Punct(
+      "<>") | Punct("!=") | "in" | "not" ␣ "in" | "is" | "is" ␣ "not"
 
-  lazy val expr: NT[Any] = binOp(xor_expr, "|", BinOp.apply)
-  lazy val xor_expr: NT[Any] = binOp(and_expr, "^", BinOp.apply)
-  lazy val and_expr: NT[Any] = binOp(shift_expr, "&", BinOp.apply)
+  lazy val expr: NT[Any] = binOp(xor_expr, '|', BinOp.apply)
+  lazy val xor_expr: NT[Any] = binOp(and_expr, '^', BinOp.apply)
+  lazy val and_expr: NT[Any] = binOp(shift_expr, '&', BinOp.apply)
   lazy val shift_expr: NT[Any] =
-    binOp(arith_expr, "<<" | ">>", BinOp.apply)
-  lazy val arith_expr: NT[Any] = binOp(term, "+" | "-", BinOp.apply)
+    binOp(arith_expr, Punct("<<") | Punct(">>"), BinOp.apply)
+  lazy val arith_expr: NT[Any] = binOp(term, Punct("+") | "-", BinOp.apply)
   lazy val term: NT[Any] =
-    binOp(factor, "*" | "@" | "/" | "%" | "//", BinOp.apply)
-  lazy val factor: NT[Any] = ("+" | "-" | "~") ␣ factor | power
-  lazy val power: NT[Any] = atom_expr | atom_expr ␣ "**" ␣ factor
+    binOp(factor, Punct("*") | '@' | '/' | '%' | Punct("//"), BinOp.apply)
+  lazy val factor: NT[Any] = (Punct("+") | '-' | '~') ␣ factor | power
+  lazy val power: NT[Any] = atom_expr | atom_expr ␣ Punct("**") ␣ factor
   lazy val atom_expr =
     opt("await" ~ spaces) ~> atom ~ spacedMany(trailer)
-  lazy val atom = ("(" ␣> (yield_expr | testlist_comp) <␣ ")"
-    | "[" ~> spacedOpt(testlist_comp) <␣ "]"
-    | "{" ~> spacedOpt(dictorsetmaker) <␣ "}"
-    | id | number | some(string) | "..."
+  lazy val atom = ('(' ␣> (yield_expr | testlist_comp) <␣ ')'
+    | '[' ~> spacedOpt(testlist_comp) <␣ ']'
+    | '{' ~> spacedOpt(dictorsetmaker) <␣ '}'
+    | id | number | some(string) | Punct("...")
     | "None" | "True" | "False")
 
-  lazy val star_expr = "*" ␣ expr
+  lazy val star_expr = '*' ␣ expr
   lazy val yield_expr = "yield" ~ spacedOpt("from" ␣ test | testlist)
 
-  lazy val testlist_comp = (listOf(test | star_expr, ",")
+  lazy val testlist_comp = (listOf(test | star_expr, ',')
     | (test | star_expr) ␣ comp_for)
 
-  lazy val trailer = ("(" ␣> optArgs <␣ ")"
-    | "[" ␣> subscriptlist <␣ "]"
-    | "." ␣> id)
-  lazy val subscriptlist = listOf(subscript, ",")
+  lazy val trailer = ('(' ␣> optArgs <␣ ')'
+    | '[' ␣> subscriptlist <␣ ']'
+    | '.' ␣> id)
+  lazy val subscriptlist = listOf(subscript, ',')
   lazy val subscript =
-    test | spacedOpt(test) ~ ":" ~ spacedOpt(test) ~ spacedOpt(
-      ":" ~> spacedOpt(test)
+    test | spacedOpt(test) ~ ':' ~ spacedOpt(test) ~ spacedOpt(
+      ':' ~> spacedOpt(test)
     )
-  lazy val exprlist = listOf(expr | star_expr, ",")
-  lazy val testlist = listOf(test, ",")
+  lazy val exprlist = listOf(expr | star_expr, ',')
+  lazy val testlist = listOf(test, ',')
 
   lazy val dictorsetmaker =
-    ((listOf(test ␣ (":" ␣> test) | "**" ␣> expr, ",")
-      | (test ␣ (":" ␣> test) | "**" ␣> expr) ␣ comp_for)
-      | (listOf(test | star_expr, ",")
+    ((listOf(test ␣ (':' ␣> test) | Punct("**") ␣> expr, ',')
+      | (test ␣ (':' ␣> test) | Punct("**") ␣> expr) ␣ comp_for)
+      | (listOf(test | star_expr, ',')
         | (test | star_expr) ␣ comp_for))
 
   lazy val classdef =
-    "class" ␣> (id ~ spacedOpt("(" ␣> optArgs <␣ ")")) ␣ (":" ␣> suite)
+    "class" ␣> (id ~ spacedOpt('(' ␣> optArgs <␣ ')')) ␣ (':' ␣> suite)
 
-  lazy val arglist = listOf(argument, ",")
+  lazy val arglist = listOf(argument, ',')
   lazy val optArgs = arglist | succeed(Nil)
 
   lazy val argument = (test ~ spacedOpt(comp_for)
-    | test ␣ "=" ␣ test
-    | "**" ␣ test
-    | "*" ␣ test)
+    | test ␣ '=' ␣ test
+    | Punct("**") ␣ test
+    | '*' ␣ test)
 
   lazy val comp_iter: NT[Any] = comp_for | comp_if
   lazy val comp_for =

@@ -20,42 +20,41 @@ class PythonParserTests
   }
 
   describe("implicit line joining") {
+    given kw: Conversion[String, Lexeme] = KW(_)
+    given punct: Conversion[Char, Lexeme] = p => Punct(p.toString)
 
-    given keyword: Conversion[Symbol, Lexeme] = kw => KW(kw.name)
-    given punctuation: Conversion[String, Lexeme] = Punct(_)
-
-    val p = many(WS | id | "(" | ")" | "[" | "]")
+    val p = many(WS | id | '(' | ')' | '[' | ']')
     val a = Id("A")
     val BS = Punct("\\")
 
-    dyck shouldParse List[Lexeme]("(", "(", ")", ")")
-    dyck shouldNotParse List[Lexeme]("(", "(", ")")
-    extDyck shouldParse List("(", a, "(", a, NL, a, ")", a, ")")
-    extDyck shouldNotParse List(a, "(", a, "(", a, NL, a, ")", a, ")", a)
+    dyck shouldParse List[Lexeme]('(', '(', ')', ')')
+    dyck shouldNotParse List[Lexeme]('(', '(', ')')
+    extDyck shouldParse List('(', a, '(', a, NL, a, ')', a, ')')
+    extDyck shouldNotParse List(a, '(', a, '(', a, NL, a, ')', a, ')', a)
 
     implicitJoin(p) shouldParse List(a, a, a, a, a)
     implicitJoin(p) shouldNotParse List(a, a, a, NL, a, a)
-    implicitJoin(p) shouldParse List(a, a, "(", a, NL, a, ")", a)
-    implicitJoin(p) shouldNotParse List(a, a, "(", a, NL, a, a)
-    implicitJoin(p) shouldNotParse List(a, a, "(", a, "(", NL, a, ")", a)
-    implicitJoin(p) shouldParse List(a, a, "(", a, "(", NL, a, ")", ")", a)
-    implicitJoin(p) shouldParse List(a, a, "(", a, "[", NL, a, "]", ")", a)
-    implicitJoin(p) shouldNotParse List(a, a, "(", a, "[", NL, a, ")", "]", a)
+    implicitJoin(p) shouldParse List(a, a, '(', a, NL, a, ')', a)
+    implicitJoin(p) shouldNotParse List(a, a, '(', a, NL, a, a)
+    implicitJoin(p) shouldNotParse List(a, a, '(', a, '(', NL, a, ')', a)
+    implicitJoin(p) shouldParse List(a, a, '(', a, '(', NL, a, ')', ')', a)
+    implicitJoin(p) shouldParse List(a, a, '(', a, '[', NL, a, ']', ')', a)
+    implicitJoin(p) shouldNotParse List(a, a, '(', a, '[', NL, a, ')', ']', a)
 
     explicitJoin(p) shouldParse List(a, a, a, BS, NL, a, a)
     explicitJoin(p) shouldParse List(a, a, a, BS, NL, a, a, BS, NL, a, a)
 
-    val input = List[Lexeme](a, NL, Comment("Hey!!"), a, BS, NL, a, a, "(", a,
-      "[", a, BS, NL, a, NL, a, "]", ")", a)
+    val input = List[Lexeme](a, NL, Comment("Hey!!"), a, BS, NL, a, a, '(', a,
+      '[', a, BS, NL, a, NL, a, ']', ')', a)
 
-    val inputWithoutComments = List[Lexeme](a, NL, a, BS, NL, a, a, "(", a, "[",
-      a, BS, NL, a, NL, a, "]", ")", a)
+    val inputWithoutComments = List[Lexeme](a, NL, a, BS, NL, a, a, '(', a, '[',
+      a, BS, NL, a, NL, a, ']', ')', a)
 
     val inputWithoutExplicit =
-      List[Lexeme](a, NL, a, a, a, "(", a, "[", a, a, NL, a, "]", ")", a)
+      List[Lexeme](a, NL, a, a, a, '(', a, '[', a, a, NL, a, ']', ')', a)
 
     val inputResult =
-      List[Lexeme](a, NL, a, a, a, "(", a, "[", a, a, a, "]", ")", a)
+      List[Lexeme](a, NL, a, a, a, '(', a, '[', a, a, a, ']', ')', a)
 
     val collect = consumed(many(any))
 
@@ -64,14 +63,14 @@ class PythonParserTests
       (inputWithoutComments, inputWithoutExplicit)
     implicitJoin(collect) shouldParseWith (inputWithoutExplicit, inputResult)
 
-    preprocess(file_input) shouldParse List(a, ";", a, "=", "yield", "from", a,
-      "=", a, ";", NL, NL, a, ";", a, NL, EOS)
+    preprocess(file_input) shouldParse List(a, ';', a, '=', "yield", "from", a,
+      '=', a, ';', NL, NL, a, ';', a, NL, EOS)
 
     preprocess(file_input) shouldParse
-      List(a, "=", a, ">>", a, "*", a, NL, EOS)
+      List(a, '=', a, Punct(">>"), a, '*', a, NL, EOS)
 
-    val sampleProg = List[Lexeme]("def", WS, Id("fun"), "(", WS, a, WS, ")",
-      ":", NL, WS, WS, a, "+=", WS, a, NL, WS, WS, a, "*=", a, NL, EOS)
+    val sampleProg = List[Lexeme]("def", WS, Id("fun"), '(', WS, a, WS, ')',
+      ':', NL, WS, WS, a, Punct("+="), WS, a, NL, WS, WS, a, Punct("*="), a, NL, EOS)
 
     parse(stripComments(collect), sampleProg) shouldBe List(sampleProg)
     parse(explicitJoin(collect), sampleProg) shouldBe List(sampleProg)
@@ -79,9 +78,9 @@ class PythonParserTests
 
     preprocess(file_input) shouldParse sampleProg
 
-    val sampleProg2 = List[Lexeme]("def", WS, Id("fun"), "(", NL, WS, a, WS, NL,
-      ")", ":", NL, WS, WS, a, "+=", Comment("Test"), BS, NL, WS, a, NL, WS, WS,
-      a, "*=", a, NL, EOS)
+    val sampleProg2 = List[Lexeme]("def", WS, Id("fun"), '(', NL, WS, a, WS, NL,
+      ')', ':', NL, WS, WS, a, Punct("+="), Comment("Test"), BS, NL, WS, a, NL, WS, WS,
+      a, Punct("*="), a, NL, EOS)
 
     parse(preprocess(collect), sampleProg2) shouldBe List(sampleProg)
     preprocess(file_input) shouldParse sampleProg2
@@ -91,56 +90,59 @@ class PythonParserTests
     val traceProg = List[Lexeme](
       Comment("define the Trace class that will be "), NL,
       Comment("invoked using decorators"), NL,
-      "class", WS, Id("Trace"), "(", Id("object"), ")", ":", NL,
-      WS, WS, WS, WS, "def", WS, Id("__init__"), "(", Id("self"), ")", ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL,
-      WS, WS, WS, WS, NL, WS, WS, WS, WS, WS, WS, "def", WS, Id("__call__"), "(", Id("self"), WS, ",", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), "(", Str("entering function "), WS, "+", WS, Id("self"), ".", Id("f"), ".", Id("__name__"), ")", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), "=", Num("0"), NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), "(", Str("arg {0}: {1}"), ".", Id("format"), "(", Id("i"), ",", Id("arg"), ")", ")", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), "=", Id("i"), "+", Num("1"), NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, NL, WS, WS, WS, WS, WS, WS, WS, WS, "return", WS, Id("self"), ".", Id("f"), "(", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", NL,
+      "class", WS, Id("Trace"), '(', Id("object"), ')', ':', NL,
+      WS, WS, WS, WS, "def", WS, Id("__init__"), '(', Id("self"), ')', ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("self"), '.', Id("f"), WS, '=', WS, Id("f"), NL,
+      WS, WS, WS, WS, NL, WS, WS, WS, WS, WS, WS, "def", WS, Id("__call__"), '(', Id("self"), WS, ',', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"), ')', ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), '(', Str("entering function "), WS, '+', WS, Id("self"), '.', Id("f"), '.', Id("__name__"), ')', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), '=', Num("0"), NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), '(', Str("arg {0}: {1}"), '.', Id("format"), '(', Id("i"), ',', Id("arg"), ')', ')', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), '=', Id("i"), '+', Num("1"), NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, NL, WS, WS, WS, WS, WS, WS, WS, WS, "return", WS, Id("self"), '.', Id("f"), '(', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"), ')', NL,
       EOS
     )
     // format: on
 
-    argument shouldParse List("*", Id("kwargs"))
-    argument shouldParse List("**", Id("kwargs"))
-    arglist shouldParse List("**", Id("kwargs2"))
-    arglist shouldParse List(Id("kwargs"), ",", WS, Id("kwargs"))
-    arglist shouldParse List("*", Id("kwargs"), ",", "*", Id("kwargs"))
-    arglist shouldParse List("**", Id("kwargs"), ",", "**", Id("kwargs"))
-    arglist shouldParse List("*", Id("kwargs"), ",", WS, "*", Id("kwargs"))
-    arglist shouldParse List("**", Id("kwargs"), ",", WS, "**", Id("kwargs"))
-    arglist shouldParse List("(", Id("args"), ",", WS, Id("kwargs"), ")")
-    arglist shouldParse List("(", "*", Id("args"), ",", WS, Id("kwargs"), ")")
+    argument shouldParse List('*', Id("kwargs"))
+    argument shouldParse List(Punct("**"), Id("kwargs"))
+    arglist shouldParse List(Punct("**"), Id("kwargs2"))
+    arglist shouldParse List(Id("kwargs"), ',', WS, Id("kwargs"))
+    arglist shouldParse List('*', Id("kwargs"), ',', '*', Id("kwargs"))
+    arglist shouldParse List(Punct("**"), Id("kwargs"), ',', Punct("**"),
+      Id("kwargs"))
+    arglist shouldParse List('*', Id("kwargs"), ',', WS, '*', Id("kwargs"))
+    arglist shouldParse List(Punct("**"), Id("kwargs"), ',', WS, Punct("**"),
+      Id("kwargs"))
+    arglist shouldParse List('(', Id("args"), ',', WS, Id("kwargs"), ')')
+    arglist shouldParse List('(', '*', Id("args"), ',', WS, Id("kwargs"), ')')
 
     arglist shouldParse
-      List("(", "*", Id("args"), ",", WS, "*", Id("kwargs"), ")")
+      List('(', '*', Id("args"), ',', WS, '*', Id("kwargs"), ')')
 
     test shouldParse
-      List(Id("f"), "(", Id("args"), ",", WS, Id("kwargs"), ")")
+      List(Id("f"), '(', Id("args"), ',', WS, Id("kwargs"), ')')
 
     test shouldParse
-      List(Id("f"), "(", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")")
+      List(Id("f"), '(', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"),
+        ')')
 
-    test shouldParse List(Id("print"), "(", Str("entering function "), WS, "+",
-      WS, Id("self"), ".", Id("f"), ".", Id("__name__"), ")")
+    test shouldParse List(Id("print"), '(', Str("entering function "), WS, '+',
+      WS, Id("self"), '.', Id("f"), '.', Id("__name__"), ')')
 
     // TODO is already ambiguous
-    // (stmt `parse` List[Lexeme](Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL)).size shouldBe 1
+    // (stmt `parse` List[Lexeme](Id("self"), '.', Id("f"), WS, '=', WS, Id("f"), NL)).size shouldBe 1
 
     // preprocess(file_input) shouldParse traceProg
 
     // (stmt `parse` List[Lexeme](
-    //     "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
+    //     "for", WS, Id("arg"), WS, "in", WS, Id("args"), ':', NL,
     //     WS, WS, Id("print"), NL)).size shouldBe 1
 
     // format: off
     stmt shouldNotParse List(
-      "def", WS, Id("__call__"), "(", Id("self"), WS, ",", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", ":", NL,
-      WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
+      "def", WS, Id("__call__"), '(', Id("self"), WS, ',', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"), ')', ':', NL,
+      WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ':', NL,
       WS, WS, WS, WS, Id("print"), NL, // this line is indented too far
       WS, WS, WS, WS, WS, WS, Id("print"), NL
     )
@@ -151,22 +153,22 @@ class PythonParserTests
     val traceProg2 = List[Lexeme](
       Comment("define the Trace class that will be "), NL,
       Comment("invoked using decorators"), NL,
-      "class", WS, Id("Trace"), "(", Id("object"), ")", ":", NL, WS,
-      WS, WS, WS, "def", WS, Id("__init__"), "(", Id("self"), ")", ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("self"), ".", Id("f"), WS, "=", WS, Id("f"), NL,
+      "class", WS, Id("Trace"), '(', Id("object"), ')', ':', NL, WS,
+      WS, WS, WS, "def", WS, Id("__init__"), '(', Id("self"), ')', ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("self"), '.', Id("f"), WS, '=', WS, Id("f"), NL,
       NL,
-      WS, WS, WS, WS, "def", WS, Id("__call__"), "(", Id("self"), WS, ",", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), "(", Str("entering function "), WS, "+", WS, Id("self"), ".", Id("f"), ".", Id("__name__"),
-      ")", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), "=", Num("0"), NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ":", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), "(", Str("arg {0}: {1}"), ".", Id("format"), "(", Id("i"), ",", Id("arg"), ")", ")", NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), "=", Id("i"), "+", Num("1"), NL,
+      WS, WS, WS, WS, "def", WS, Id("__call__"), '(', Id("self"), WS, ',', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"), ')', ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), '(', Str("entering function "), WS, '+', WS, Id("self"), '.', Id("f"), '.', Id("__name__"),
+      ')', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), '=', Num("0"), NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, "for", WS, Id("arg"), WS, "in", WS, Id("args"), ':', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("print"), '(', Str("arg {0}: {1}"), '.', Id("format"), '(', Id("i"), ',', Id("arg"), ')', ')', NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, WS, WS, Id("i"), '=', Id("i"), '+', Num("1"), NL,
       WS, WS, NL,
       NL,
       NL,
       NL,
-      WS, WS, WS, WS, WS, WS, WS, WS, "return", WS, Id("self"), ".", Id("f"), "(", "*", Id("args"), ",", WS, "**", Id("kwargs"), ")", NL,
+      WS, WS, WS, WS, WS, WS, WS, WS, "return", WS, Id("self"), '.', Id("f"), '(', '*', Id("args"), ',', WS, Punct("**"), Id("kwargs"), ')', NL,
       EOS
     )
     // format: off
@@ -178,8 +180,8 @@ class PythonParserTests
     // format: off
     val dummyin = List(
       NL,
-      WS, "def", WS, Id("f"), "(", ")", ":", NL,
-      WS, WS, "def", WS, Id("f"), "(", ")", ":", NL,
+      WS, "def", WS, Id("f"), '(', ')', ':', NL,
+      WS, WS, "def", WS, Id("f"), '(', ')', ':', NL,
       WS, WS, WS, Id("print"), NL,
       WS, WS, WS, Id("print"), NL,
       WS, WS, WS, Id("i"), NL
