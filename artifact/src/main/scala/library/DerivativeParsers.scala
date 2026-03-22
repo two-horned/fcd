@@ -131,7 +131,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class Alt[R, U >: R](val p: Parser[R], val q: Parser[U])
       extends BinaryPrintable("|", p, q)
       with Parser[U] {
-    def results = (p.results ++ q.results).distinct
+    def results = List.from(p.results.iterator.concat(q.results).distinct)
     def failed = p.failed && q.failed
     def accepts = p.accepts || q.accepts
     def consume = (in: Elem) => (p consume in) alt (q consume in)
@@ -145,7 +145,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       extends BinaryPrintable("~", p, q)
       with Parser[R ~ U] {
 
-    def results = (for { r <- p.results; u <- q.results } yield (r, u)).distinct
+    def results = List.from(p.results.iterator.zip(q.results).distinct)
     // q.failed forces q, which might not terminate for grammars with
     // infinite many nonterminals, like:
     //   def foo(p) = 'a' ~ foo(p << 'a')
@@ -206,8 +206,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class And[R, U](val p: Parser[R], val q: Parser[U])
       extends BinaryPrintable("&", p, q)
       with Parser[(R, U)] {
-    def results =
-      (for { r <- p.results; u <- q.results } yield ((r, u))).distinct
+    def results = List.from(p.results.iterator.zip(q.results).distinct)
     def failed = p.failed || q.failed
     def accepts = p.accepts && q.accepts
     def consume = (in: Elem) => (p consume in) and (q consume in)
@@ -219,7 +218,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       extends UnaryPrintable("flatMap", p)
       with Parser[U] {
     def results =
-      ((p.results map f) flatMap (_.results)).distinct // res().distinct
+      List.from(p.results.iterator.map(f).flatMap(_.results).distinct)
     def accepts = !results.isEmpty
     def failed = p.failed // that's the best we know
 
