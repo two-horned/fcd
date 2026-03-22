@@ -11,7 +11,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   trait Parser[+R] extends Printable { p =>
 
     def results: Results[R]
-    def consume: Elem => Parser[R]
+    infix def consume(in: Elem): Parser[R]
 
     def accepts: Boolean
     def failed: Boolean
@@ -41,7 +41,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def results = Nil
     override def failed = true
     override def accepts = false
-    override def consume = _ => this
+    override def consume(x: Elem) = this
 
     override def alt[U >: Nothing](q: Parser[U]) = q
     override def seq[U](q: Parser[U]) = this
@@ -62,7 +62,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def results = List(())
     override def failed = false
     override def accepts = true
-    override def consume = _ => this
+    override def consume(x: Elem) = this
     override def not = Fail
     override def and[U](q: Parser[U]) = q map { ((), _) }
 
@@ -77,7 +77,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def results = ress
     override def failed = false
     override def accepts = true
-    override def consume = (in: Elem) => fail
+    override def consume(x: Elem) = fail
     override def toString = s"ε($ress)"
     override def done: Parser[R] = this
     override def mapResults[T](f: (=> Results[R]) => Results[T]): Parser[T] =
@@ -96,9 +96,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = Nil
     def failed = false
     def accepts = false
-    def consume = (in: Elem) =>
-      if in == elem then succeed(in)
-      else fail
+    def consume(x: Elem) = if x == elem then succeed(x) else fail
 
     lazy val name = "'" + escape(elem) + "'"
     def printNode = s"""$id [label="$name", shape=circle]"""
@@ -112,9 +110,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = Nil
     def failed = false
     def accepts = false
-    def consume = (in: Elem) =>
-      if f(in) then succeed(in)
-      else fail
+    def consume(x: Elem) = if f(x) then succeed(x) else fail
   }
 
   class Not[R](val p: Parser[R])
@@ -123,7 +119,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = if p.results.isEmpty then List(()) else Nil
     def failed = false // we never know, this is a conservative approx.
     def accepts = !p.accepts
-    def consume: Elem => Parser[Unit] = in => (p consume in).not
+    def consume(x: Elem) = p.consume(x).not
     override def not = p withResults List(())
     override def toString = s"not($p)"
   }
@@ -134,7 +130,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = List.from(p.results.iterator.concat(q.results).distinct)
     def failed = p.failed && q.failed
     def accepts = p.accepts || q.accepts
-    def consume = (in: Elem) => (p consume in) alt (q consume in)
+    def consume(x: Elem) = (p consume x) alt (q consume x)
 
     // optimization for not(p | map(always))
     override def not = (p.not and q.not) withResults List(())
@@ -152,8 +148,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // so we approximate similar to flatmap.
     def failed = p.failed // || q.failed
     def accepts = p.accepts && q.accepts
-    def consume = (in: Elem) =>
-      ((p consume in) seq q) alt (p.done seq (q consume in))
+    def consume(x: Elem) = ((p consume x) seq q) alt (p.done seq (q consume x))
     override def toString = s"($p ~ $q)"
 
     // canonicalization rule (1) from PLDI 2016
@@ -167,7 +162,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = p.results
     def failed = p.failed
     def accepts = p.accepts
-    def consume = (el: Elem) => fail
+    def consume(x: Elem) = fail
     override def done = this
     override def toString = s"done($p)"
   }
@@ -179,7 +174,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = if p.results.isEmpty then Nil else f(p.results).distinct
     def failed = p.failed
     def accepts = p.accepts
-    def consume = (el: Elem) => (p consume el) mapResults f
+    def consume(x: Elem) = (p consume x) mapResults f
     override def mapResults[T](g: (=> Results[U]) => Results[T]): Parser[T] =
       p mapResults { res => g(f(res)) }
     override def map[T](g: U => T): Parser[T] = p mapResults { res =>
@@ -209,7 +204,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def results = for x <- p.results; y <- q.results yield (x, y)
     def failed = p.failed || q.failed
     def accepts = p.accepts && q.accepts
-    def consume = (in: Elem) => (p consume in) and (q consume in)
+    def consume(x: Elem) = (p consume x) and (q consume x)
     override def not = p.not alt q.not
     override def toString = s"($p & $q)"
   }
@@ -222,9 +217,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def accepts = !results.isEmpty
     def failed = p.failed // that's the best we know
 
-    def consume: Elem => Parser[U] = in => {
-      val next = (p consume in) flatMap f
-      val qss = (p.results map f) map (_ consume in)
+    def consume(x: Elem) = {
+      val next = (p consume x) flatMap f
+      val qss = (p.results map f) map (_ consume x)
       qss.foldLeft(next)(_ alt _)
     }
     override def toString = "flatMap"
@@ -271,12 +266,11 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // that recursively derive. Optimizing the nonterminal node away causes
     // divergence on these grammars. Worse, in the latter case
     // forcing `next` will already cause divergence.
-    override def consume: Elem => Parser[R] = el =>
-      cache.getOrElseUpdate(
-        el,
-        if p.failed then fail
-        else nonterminal(p consume el)
-      )
+    override def consume(x: Elem) = cache.getOrElseUpdate(
+      x,
+      if p.failed then fail
+      else nonterminal(p consume x)
+    )
 
     def named(str: => String): this.type = {
       name = str
