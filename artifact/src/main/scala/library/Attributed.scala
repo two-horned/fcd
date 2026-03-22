@@ -53,12 +53,12 @@ trait Attributed {
     /** Recomputes the value of this attribute.
       */
     def update(): Unit = {
-      if (fixed) return
+      if fixed then return
 
       val old = currentValue
       val newValue = compute()
 
-      if (!wt(newValue, currentValue)) {
+      if !wt(newValue, currentValue) then {
         currentValue = join(newValue, currentValue)
         FixedPoint.changed = true
       }
@@ -74,11 +74,11 @@ trait Attributed {
        (2) It's been manually set (this.fixed); or
        (3) It needs to be computed (generation < FixedPoint.generation).
        */
-      if (fixed || stabilized || generation == FixedPoint.generation)
+      if fixed || stabilized || generation == FixedPoint.generation then
         return currentValue
 
       fix()
-      if (FixedPoint.stabilized) stabilized = true
+      if FixedPoint.stabilized then stabilized = true
       currentValue
     }
   }
@@ -91,7 +91,7 @@ trait Attributed {
   private def fix() = {
     this.generation = FixedPoint.generation
 
-    if (FixedPoint.master eq null) {
+    if FixedPoint.master eq null then {
       FixedPoint.master = this
 
       FixedPoint.generation += 1

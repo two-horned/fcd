@@ -44,12 +44,12 @@ trait DerivedOps { self: Parsers & Syntax =>
     alt(p ^^ { r => Some(r) }, succeed(None))
 
   def manyN[T](n: Int, p: Parser[T]): Parser[List[T]] = {
-    if (n == 0) succeed(Nil)
+    if n == 0 then succeed(Nil)
     else p ~ manyN(n - 1, p) ^^ mkList
   }
 
   def atMost[T](n: Int, p: Parser[T]): Parser[List[T]] = {
-    if (n == 0) succeed(Nil)
+    if n == 0 then succeed(Nil)
     else (p ~ atMost(n - 1, p) ^^ mkList) | succeed(Nil)
   }
 
@@ -83,7 +83,7 @@ trait DerivedOps { self: Parsers & Syntax =>
     succeed(p) | eat { c => delegate(p << c) }
 
   def delegateN[T](n: Int, p: Parser[T]): Parser[Parser[T]] =
-    if (n <= 0) succeed(p)
+    if n <= 0 then succeed(p)
     else eat { c => delegateN(n - 1, p << c) }
 
   // collects the results of parsers
@@ -139,7 +139,7 @@ trait DerivedOps { self: Parsers & Syntax =>
 
   // combinator that only passes the selected lexemes to p
   def filter[T](pred: Elem => Boolean): Parser[T] => Parser[T] =
-    rep(el => p => if (pred(el)) (p << el) else p)
+    rep(el => p => if pred(el) then (p << el) else p)
 
   def skip[T]: Parser[T] => Parser[T] = rep(el => p => p)
 

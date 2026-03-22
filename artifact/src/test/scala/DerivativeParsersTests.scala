@@ -179,7 +179,7 @@ class DerivativeParsersTests
 
   describe("flatMap uses fixed point computation") {
     lazy val fm: NT[Int] = succ(1) | fm.flatMap { n =>
-      if (n < 5) succ(n + 1) else err
+      if n < 5 then succ(n + 1) else err
     }
 
     fm.results.toSet shouldBe Set(1, 2, 3, 4, 5)
@@ -238,10 +238,8 @@ class DerivativeParsersTests
 
     // repeated here for convenience (and specialized to this usecase)
     def feedNTimes[T](p: Parser[T])(n: Int): Parser[T] =
-      if (n <= 0)
-        done(p)
-      else
-        eat { c => feedNTimes(p << c)(n - 1) }
+      if n <= 0 then done(p)
+      else eat { c => feedNTimes(p << c)(n - 1) }
 
     def IMAP[T](body: Parser[T]): Parser[T] =
       header >> feedNTimes(body)
@@ -275,7 +273,7 @@ class DerivativeParsersTests
   def indent[T](p: Parser[T]): Parser[T] = {
 
     def readLine(p: Parser[T]): Parser[T] = done(p) | eat { c =>
-      if (c == '\n') { indent(p << c) }
+      if c == '\n' then indent(p << c)
       else { readLine(p << c) }
     }
 

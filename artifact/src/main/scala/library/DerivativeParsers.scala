@@ -20,7 +20,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     infix def and[U](q: Parser[U]): Parser[(R, U)] = And(p, q)
     infix def seq[U](q: Parser[U]): Parser[(R, U)] = new Seq(p, q)
     infix def flatMap[U](f: R => Parser[U]): Parser[U] = FlatMap(p, f)
-    def done: Parser[R] = if (accepts) Succeed(p.results) else fail
+    def done: Parser[R] = if accepts then Succeed(p.results) else fail
 
     def not: Parser[Unit] = Not(p)
 
@@ -32,13 +32,13 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     // for optimization of biased choice
     def prefix: Parser[Unit] = {
-      if (accepts) always
+      if accepts then always
       else eat { el => (p consume el).prefix }
     }
   }
 
   object Fail extends NullaryPrintable("∅") with Parser[Nothing] {
-    override def results = List()
+    override def results = Nil
     override def failed = true
     override def accepts = false
     override def consume = _ => this
@@ -83,22 +83,22 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def mapResults[T](f: (=> Results[R]) => Results[T]): Parser[T] =
       Succeed(f(ress))
     override def seq[U](q: Parser[U]): Parser[R ~ U] = q mapResults { ress2 =>
-      for (r <- ress; r2 <- ress2) yield (r, r2)
+      for {
+        r <- ress
+        r2 <- ress2
+      } yield (r, r2)
     }
     override def flatMap[U](f: R => Parser[U]): Parser[U] =
       ress.map(f).reduce(_ alt _)
   }
 
   case class Accept(elem: Elem) extends Parser[Elem] {
-    def results = List()
+    def results = Nil
     def failed = false
     def accepts = false
     def consume = (in: Elem) =>
-      if (in == elem) {
-        succeed(in)
-      } else {
-        fail
-      }
+      if in == elem then succeed(in)
+      else fail
 
     lazy val name = "'" + escape(elem) + "'"
     def printNode = s"""$id [label="$name", shape=circle]"""
@@ -109,21 +109,18 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class AcceptIf(f: Elem => Boolean)
       extends NullaryPrintable("acceptIf")
       with Parser[Elem] {
-    def results = List()
+    def results = Nil
     def failed = false
     def accepts = false
     def consume = (in: Elem) =>
-      if (f(in)) {
-        succeed(in)
-      } else {
-        fail
-      }
+      if f(in) then succeed(in)
+      else fail
   }
 
   class Not[R](val p: Parser[R])
       extends UnaryPrintable("not", p)
       with Parser[Unit] {
-    def results = (if (p.results.isEmpty) List(()) else List())
+    def results = if p.results.isEmpty then List(()) else Nil
     def failed = false // we never know, this is a conservative approx.
     def accepts = !p.accepts
     def consume: Elem => Parser[Unit] = in => (p consume in).not
@@ -179,7 +176,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       extends UnaryPrintable(s"mapResults", p)
       with Parser[U] {
     // preserve whether p actually has results (f might ignore its argument...)
-    def results = if (p.results.isEmpty) List() else f(p.results).distinct
+    def results = if p.results.isEmpty then Nil else f(p.results).distinct
     def failed = p.failed
     def accepts = p.accepts
     def consume = (el: Elem) => (p consume el) mapResults f
@@ -259,7 +256,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     private object resultsFix extends Attributed {
       object results
           extends Attribute[List[R]](
-            List(),
+            Nil,
             (nw, ol) => (nw ++ ol).distinct,
             (nw, ol) => nw.toSet.subsetOf(ol.toSet)
           )
@@ -278,10 +275,8 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def consume: Elem => Parser[R] = el =>
       cache.getOrElseUpdate(
         el,
-        if (p.failed)
-          fail
-        else
-          nonterminal(p consume el)
+        if p.failed then fail
+        else nonterminal(p consume el)
       )
 
     def named(str: => String): this.type = {
@@ -291,14 +286,11 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     var name = "nt"
     private val rec = DynamicVariable[Boolean](false)
     override def toString =
-      if (rec.value)
-        s"nt(${System.identityHashCode(this)})"
-      else
-        rec.withValue(true) { s"nt($p)" }
+      if rec.value then s"nt(${System.identityHashCode(this)})"
+      else rec.withValue(true) { s"nt($p)" }
 
     def printNode =
-      if (rec.value)
-        ""
+      if rec.value then ""
       else
         rec.withValue(true) {
           s"""  ${id} [shape=none, fillcolor="#dedede", style=filled, fontsize=8, fontname=mono, label=<$table>];
