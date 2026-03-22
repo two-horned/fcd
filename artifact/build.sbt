@@ -1,6 +1,6 @@
 name := "first-class-derivatives"
 
-version := "2.1.0"
+version := "2.1.1"
 
 scalaVersion := "3.7.4"
 

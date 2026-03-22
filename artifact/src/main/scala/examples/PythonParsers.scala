@@ -87,8 +87,8 @@ trait PythonLexemes { self: Parsers & DerivedOps & Syntax =>
     case _          => fail
   }
 
-  def isComment: Lexeme => Boolean = _.isInstanceOf[Comment]
-  def isNL: Lexeme => Boolean = _ == NL
+  def isComment(x: Lexeme): Boolean = x.isInstanceOf[Comment]
+  def isNL(x: Lexeme): Boolean = x == NL
 }
 
 trait PythonParsers extends PythonLexemes, PythonAst {
@@ -108,7 +108,7 @@ trait PythonParsers extends PythonLexemes, PythonAst {
   // Simply preprocesses the input stream and strips out comments
   def stripComments[T](p: Parser[T]): Parser[T] = {
     lazy val stripped: Parser[T] =
-      done(p) | switch(isComment, _ => stripped, c => stripComments(p << c))
+      done(p) | switch(isComment(_), _ => stripped, c => stripComments(p << c))
     stripped
   }
 
