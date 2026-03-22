@@ -27,13 +27,13 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // the map family
     infix def mapResults[U](f: (=> Results[R]) => Results[U]): Parser[U] =
       MapResults(p, f)
-    infix def map[U](f: R => U): Parser[U] = p mapResults { ress => ress map f }
+    infix def map[U](f: R => U): Parser[U] = p.mapResults(_.map(f))
     infix def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
 
     // for optimization of biased choice
     def prefix: Parser[Unit] = {
       if accepts then always
-      else eat { el => (p consume el).prefix }
+      else eat(p.consume(_).prefix)
     }
   }
 
@@ -48,9 +48,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def and[U](q: Parser[U]) = this
     override def map[U](f: Nothing => U) = this
     override def flatMap[U](g: Nothing => Parser[U]) = this
-    override def mapResults[U](
-        f: (=> Results[Nothing]) => Results[U]
-    ) = this
+    override def mapResults[U](f: (=> Results[Nothing]) => Results[U]) = this
     override def done = this
 
     override def not = Always
@@ -73,23 +71,23 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   case class Succeed[R](ress: Results[R])
       extends NullaryPrintable("ε")
-      with Parser[R] { p =>
+      with Parser[R] {
     override def results = ress
     override def failed = false
     override def accepts = true
     override def consume(x: Elem) = fail
     override def toString = s"ε($ress)"
-    override def done: Parser[R] = this
-    override def mapResults[T](f: (=> Results[R]) => Results[T]): Parser[T] =
+    override def done = this
+    override def mapResults[T](f: (=> Results[R]) => Results[T]) =
       Succeed(f(ress))
-    override def seq[U](q: Parser[U]): Parser[R ~ U] = q mapResults { ress2 =>
+    override def seq[U](q: Parser[U]) = q mapResults { ress2 =>
       for {
         r <- ress
         r2 <- ress2
       } yield (r, r2)
     }
-    override def flatMap[U](f: R => Parser[U]): Parser[U] =
-      ress.map(f).reduce(_ alt _)
+    override def flatMap[U](f: R => Parser[U]) =
+      ress.iterator.map(f).reduce(_ alt _)
   }
 
   case class Accept(elem: Elem) extends Parser[Elem] {
@@ -175,11 +173,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def failed = p.failed
     def accepts = p.accepts
     def consume(x: Elem) = (p consume x) mapResults f
-    override def mapResults[T](g: (=> Results[U]) => Results[T]): Parser[T] =
+    override def mapResults[T](g: (=> Results[U]) => Results[T]) =
       p mapResults { res => g(f(res)) }
-    override def map[T](g: U => T): Parser[T] = p mapResults { res =>
-      f(res) map g
-    }
+    override def map[T](g: U => T) = p mapResults { res => f(res) map g }
     override def done = p.done mapResults f
 
     // we can forget the results here.
@@ -188,11 +184,11 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
     // canonicalization rule (2) from PLDI 2016
     // allows for instance rewriting (always.map(f) & p) -> p.map(...f...)
-    override def seq[S](q: Parser[S]): Parser[U ~ S] =
+    override def seq[S](q: Parser[S]) =
       (p seq q).mapResults(rss =>
         rss.unzip match { case (us, ss) => f(us) zip ss }
       )
-    override def and[S](q: Parser[S]): Parser[(U, S)] =
+    override def and[S](q: Parser[S]) =
       (p and q).mapResults(rss =>
         rss.unzip match { case (us, ss) => f(us) zip ss }
       )
