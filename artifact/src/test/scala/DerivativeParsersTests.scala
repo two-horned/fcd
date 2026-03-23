@@ -4,6 +4,7 @@ package test
 import scala.language.higherKinds
 import language.implicitConversions
 import org.scalatest.funspec.AnyFunSpec
+import scala.collection.immutable.ArraySeq
 
 class DerivativeParsersTests
     extends AnyFunSpec
@@ -182,7 +183,7 @@ class DerivativeParsersTests
       if n < 5 then succ(n + 1) else err
     }
 
-    fm.results.toSet shouldBe Set(1, 2, 3, 4, 5)
+    Set.from(fm.results) shouldBe Set(1, 2, 3, 4, 5)
   }
 
   describe("Stream preprocessing") {
@@ -605,7 +606,7 @@ class DerivativeParsersTests
     // region. For instance the first closing bracket in "(\n # ) \n )" should
     // not count.
     val pairs = Map[Elem, Elem]('(' -> ')', '[' -> ']', '{' -> '}')
-    val (opening, closing) = (pairs.keys.toList, pairs.values.toList)
+    val (opening, closing) = (ArraySeq.from(pairs.keys), ArraySeq.from(pairs.values))
 
     lazy val dyck: NT[Any] = onOf(opening) >> { paren =>
       many(dyck) ~ pairs(paren)
