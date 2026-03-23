@@ -25,7 +25,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     def not: Parser[Unit] = Not(p)
 
     // the map family
-    infix def mapResults[U](f: Results[R] => Results[U]): Parser[U] =
+    infix def mapResults[U](f: Iterable[R] => Iterable[U]): Parser[U] =
       MapResults(p, f)
     infix def map[U](f: R => U): Parser[U] = p.mapResults(_.map(f))
     infix def withResults[U](res: List[U]): Parser[U] = mapResults(_ => res)
@@ -48,7 +48,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def and[U](q: Parser[U]) = this
     override def map[U](f: Nothing => U) = this
     override def flatMap[U](g: Nothing => Parser[U]) = this
-    override def mapResults[U](f: Results[Nothing] => Results[U]) = this
+    override def mapResults[U](f: Iterable[Nothing] => Iterable[U]) = this
     override def done = this
 
     override def not = Always
@@ -78,8 +78,8 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def consume(x: Elem) = fail
     override def toString = s"ε($ress)"
     override def done = this
-    override def mapResults[T](f: Results[R] => Results[T]) =
-      Succeed(f(ress))
+    override def mapResults[T](f: Iterable[R] => Iterable[T]) =
+      Succeed(List.from(f(ress)))
     override def seq[U](q: Parser[U]) = q mapResults { ress2 =>
       for {
         r <- ress
@@ -165,15 +165,17 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def toString = s"done($p)"
   }
 
-  class MapResults[R, U](val p: Parser[R], f: Results[R] => Results[U])
+  class MapResults[R, U](val p: Parser[R], f: Iterable[R] => Iterable[U])
       extends UnaryPrintable(s"mapResults", p)
       with Parser[U] {
     // preserve whether p actually has results (f might ignore its argument...)
-    def results = if p.results.isEmpty then Nil else f(p.results).distinct
+    def results =
+      if p.results.isEmpty then Nil
+      else List.from(f(p.results).iterator.distinct)
     def failed = p.failed
     def accepts = p.accepts
-    def consume(x: Elem) = (p consume x) mapResults f
-    override def mapResults[T](g: Results[U] => Results[T]) =
+    def consume(x: Elem) = (p consume x).mapResults(f)
+    override def mapResults[T](g: Iterable[U] => Iterable[T]) =
       p mapResults { res => g(f(res)) }
     override def map[T](g: U => T) = p mapResults { f(_) map g }
     override def done = p.done mapResults f
@@ -186,11 +188,11 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // allows for instance rewriting (always.map(f) & p) -> p.map(...f...)
     override def seq[S](q: Parser[S]) =
       (p seq q).mapResults(_.view.unzip match {
-        case (us, ss) => f(List.from(us)) zip ss
+        case (us, ss) => f(us) zip ss
       })
     override def and[S](q: Parser[S]) =
       (p and q).mapResults(_.view.unzip match {
-        case (us, ss) => f(List.from(us)) zip ss
+        case (us, ss) => f(us) zip ss
       })
   }
 
@@ -223,9 +225,9 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class Nonterminal[R](_p: => Parser[R]) extends Parser[R] {
     lazy val p = _p
 
-    def accepts: Boolean = propertiesFix.nullable.value
-    def failed: Boolean = propertiesFix.empty.value
-    def results: Results[R] = resultsFix.results.value
+    def accepts = propertiesFix.nullable.value
+    def failed = propertiesFix.empty.value
+    def results = resultsFix.results.value
 
     // This separation into two fixed points is essential to
     // prevent excessive recomputation.
