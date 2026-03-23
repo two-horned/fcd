@@ -208,14 +208,13 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class FlatMap[R, U](val p: Parser[R], f: R => Parser[U])
       extends UnaryPrintable("flatMap", p)
       with Parser[U] {
-    def results =
-      List.from(p.results.iterator.map(f).flatMap(_.results).distinct)
+    def results = List.from(p.results.iterator.flatMap(f(_).results).distinct)
     def accepts = !results.isEmpty
     def failed = p.failed // that's the best we know
 
     def consume(x: Elem) = {
       val next = (p consume x) flatMap f
-      val qss = (p.results map f) map (_ consume x)
+      val qss = p.results.iterator.map(f(_) consume x)
       qss.foldLeft(next)(_ alt _)
     }
     override def toString = "flatMap"
