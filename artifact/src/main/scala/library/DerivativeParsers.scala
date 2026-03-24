@@ -70,24 +70,24 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     override def toString = "always"
   }
 
-  case class Succeed[R](ress: Iterable[R])
+  case class Succeed[R](res: Iterable[R])
       extends NullaryPrintable("ε")
       with Parser[R] {
-    override def results = Set.from(ress)
+    override def results = Set.from(res)
     override def failed = false
     override def accepts = true
     override def consume(x: Elem) = Fail
-    override def toString = s"ε($ress)"
+    override def toString = s"ε($res)"
     override def done = this
-    override def mapResults[T](f: Iterable[R] => Iterable[T]) = Succeed(f(ress))
-    override def seq[U](q: Parser[U]) = q mapResults { ress2 =>
+    override def mapResults[T](f: Iterable[R] => Iterable[T]) = Succeed(f(res))
+    override def seq[U](q: Parser[U]) = q mapResults { res2 =>
       for {
-        r <- ress
-        r2 <- ress2
+        r <- res
+        r2 <- res2
       } yield (r, r2)
     }
     override def flatMap[U](f: R => Parser[U]) =
-      ress.iterator.map(f).reduce(_ alt _)
+      res.iterator.map(f).reduce(_ alt _)
   }
 
   case class Accept(elem: Elem) extends Parser[Elem] {
