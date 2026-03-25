@@ -246,7 +246,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       object results
           extends Attribute[Set[R]](
             Set(),
-            (nw, ol) => nw union ol,
+            (nw, ol) => ol union nw,
             (nw, ol) => nw.subsetOf(ol)
           )
 
