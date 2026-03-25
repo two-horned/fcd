@@ -1,8 +1,8 @@
 package fcd
 
-trait PythonAst {
-  trait Tree
 
+object PythonAst {
+  trait Tree
   case class Program(stmts: Seq[Any]) extends Tree
 
   case class Decorator(name: Any, args: Seq[Any]) extends Tree

@@ -91,9 +91,10 @@ trait PythonLexemes { self: Parsers & DerivedOps & Syntax =>
   def isNL(x: Lexeme): Boolean = x == NL
 }
 
-trait PythonParsers extends PythonLexemes, PythonAst {
+trait PythonParsers extends PythonLexemes {
   self: Parsers & Syntax & DerivedOps =>
 
+  import PythonAst.*
   import Stmt._
 
   // general toolbox
