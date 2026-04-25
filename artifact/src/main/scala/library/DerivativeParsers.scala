@@ -39,10 +39,10 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   }
 
   object Fail extends NullaryPrintable("∅") with Parser[Nothing] {
-    override def results = Set()
-    override def failed = true
-    override def accepts = false
-    override def consume(x: Elem) = this
+    def results = Set()
+    def failed = true
+    def accepts = false
+    def consume(x: Elem) = this
 
     override def alt[U](q: Parser[U]) = q
     override def seq[U](q: Parser[U]) = this
@@ -58,10 +58,11 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   }
 
   object Always extends NullaryPrintable("∞") with Parser[Unit] {
-    override def results = Set(())
-    override def failed = false
-    override def accepts = true
-    override def consume(x: Elem) = this
+    def results = Set(())
+    def failed = false
+    def accepts = true
+    def consume(x: Elem) = this
+
     override def not = Fail
     override def and[U](q: Parser[U]) = q map { ((), _) }
 
@@ -261,7 +262,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
     // that recursively derive. Optimizing the nonterminal node away causes
     // divergence on these grammars. Worse, in the latter case
     // forcing `next` will already cause divergence.
-    override def consume(x: Elem) = cache.getOrElseUpdate(
+    def consume(x: Elem) = cache.getOrElseUpdate(
       x,
       if p.failed then Fail
       else nonterminal(p consume x)
