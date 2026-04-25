@@ -33,7 +33,7 @@ trait Attributed {
     private var compute: () => A = null
     private var fixed = false
 
-    /** Sets the computation the updates this attribute.
+    /** Sets the computation that updates this attribute.
       *
       * @param computation
       *   the computation that updates this attribute.
