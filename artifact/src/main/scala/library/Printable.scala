@@ -34,21 +34,24 @@ trait Printable {
   def printNode: String
 }
 
-abstract class NullaryPrintable(val name: String) extends Printable {
+trait NullaryPrintable(val name: String) extends Printable {
   def printNode = s"""$id [label="$name", shape=circle]"""
+  override def toString = name
+
 }
 
-abstract class UnaryPrintable(val name: String, _p: => Printable)
-    extends Printable {
+trait UnaryPrintable(val name: String, _p: Printable) extends Printable {
   private lazy val p = _p
+  override def toString = s"$name($p)"
   def printNode =
     s"""  ${id} [shape=none, fontsize=8, fontname=mono, label=<$table>];
        |  ${id}:s -> ${p.id}
        |${p.printNode}""".stripMargin('|')
 }
 
-abstract class BinaryPrintable(val name: String, p: Printable, q: Printable)
+trait BinaryPrintable(val name: String, p: Printable, q: Printable)
     extends Printable {
+  override def toString = s"($p $name $q)"
   def printNode =
     s"""  ${id} [shape=none, fontsize=8, fontname=mono, label=<$table>];
        |  ${id}:sw -> ${p.id}
