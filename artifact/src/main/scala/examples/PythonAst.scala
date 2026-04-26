@@ -1,6 +1,5 @@
 package fcd
 
-
 object PythonAst {
   trait Tree
   case class Program(stmts: Seq[Any]) extends Tree

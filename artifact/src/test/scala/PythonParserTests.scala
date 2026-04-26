@@ -69,8 +69,9 @@ class PythonParserTests
     preprocess(file_input) shouldParse
       List(a, '=', a, Punct(">>"), a, '*', a, NL, EOS)
 
-    val sampleProg = List[Lexeme]("def", WS, Id("fun"), '(', WS, a, WS, ')',
-      ':', NL, WS, WS, a, Punct("+="), WS, a, NL, WS, WS, a, Punct("*="), a, NL, EOS)
+    val sampleProg =
+      List[Lexeme]("def", WS, Id("fun"), '(', WS, a, WS, ')', ':', NL, WS, WS,
+        a, Punct("+="), WS, a, NL, WS, WS, a, Punct("*="), a, NL, EOS)
 
     parse(stripComments(collect), sampleProg) shouldBe List(sampleProg)
     parse(explicitJoin(collect), sampleProg) shouldBe List(sampleProg)
@@ -79,8 +80,8 @@ class PythonParserTests
     preprocess(file_input) shouldParse sampleProg
 
     val sampleProg2 = List[Lexeme]("def", WS, Id("fun"), '(', NL, WS, a, WS, NL,
-      ')', ':', NL, WS, WS, a, Punct("+="), Comment("Test"), BS, NL, WS, a, NL, WS, WS,
-      a, Punct("*="), a, NL, EOS)
+      ')', ':', NL, WS, WS, a, Punct("+="), Comment("Test"), BS, NL, WS, a, NL,
+      WS, WS, a, Punct("*="), a, NL, EOS)
 
     parse(preprocess(collect), sampleProg2) shouldBe List(sampleProg)
     preprocess(file_input) shouldParse sampleProg2

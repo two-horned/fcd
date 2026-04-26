@@ -606,7 +606,8 @@ class DerivativeParsersTests
     // region. For instance the first closing bracket in "(\n # ) \n )" should
     // not count.
     val pairs = Map[Elem, Elem]('(' -> ')', '[' -> ']', '{' -> '}')
-    val (opening, closing) = (ArraySeq.from(pairs.keys), ArraySeq.from(pairs.values))
+    val (opening, closing) =
+      (ArraySeq.from(pairs.keys), ArraySeq.from(pairs.values))
 
     lazy val dyck: NT[Any] = onOf(opening) >> { paren =>
       many(dyck) ~ pairs(paren)
