@@ -5,12 +5,12 @@ trait Syntax { self: Parsers & DerivedOps =>
     def <<(in: Elem) = feed(p, in)
     def <<<(in: Seq[Elem]) = feedAll(p, in)
     def ~[U](q: Parser[U]) = seq(p, q)
-    def <~[U](q: Parser[U]) = map(seq(p, map(q, _ => ())), _._1)
-    def ~>[U](q: Parser[U]) = map(seq(map(p, _ => ()), q), _._2)
+    def <~[U](q: Parser[U]) = map(seq(p, q), _._1)
+    def ~>[U](q: Parser[U]) = map(seq(p, q), _._2)
     def |[U >: R](q: Parser[U]) = alt(p, q)
     def &[U](q: Parser[U]) = and(p, q)
-    def <&[U](q: Parser[U]) = map(and(p, map(q, _ => ())), _._1)
-    def &>[U](q: Parser[U]) = q <& p
+    def <&[U](q: Parser[U]) = map(and(p, q), _._1)
+    def &>[U](q: Parser[U]) = map(and(p, q), _._2)
 
     // biased Alternative
     def <|[U >: R](q: Parser[U]) = biasedAlt(p, q)
