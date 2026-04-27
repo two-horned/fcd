@@ -58,8 +58,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       case MapRes(p, f)  => p.consume(x).map(f)
       case FlatMap(p, f) => {
         val next = p.consume(x).flatMap(f)
-        val qss = p.results.iterator.map(f(_).consume(x))
-        qss.foldLeft(next)(_ `alt` _)
+        p.results.foldLeft(next)((acc, y) => acc.alt(f(y).consume(x)))
       }
       case NT(inner, _) => inner.consume(x)
     }
@@ -74,7 +73,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       case MapToUnit(p)                     => p.accepts
       case FMapRes(p, _)                    => p.accepts
       case MapRes(p, _)                     => p.accepts
-      case FlatMap(p, _)                    => !results.isEmpty
+      case FlatMap(p, f)                    => p.results.exists(f(_).accepts)
       case NT(inner, _)                     => inner.accepts
     }
 
