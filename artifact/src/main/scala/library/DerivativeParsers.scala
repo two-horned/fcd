@@ -294,7 +294,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
 
   def feed[R](in: Elem, p: => Parser[R]) = p.consume(in)
 
-  def results[R](p: Parser[R]) = p.results
+  def results[R](p: Parser[R]) = List.from(p.results)
 
   def done[T](p: Parser[T]): Parser[T] = p.done
 
