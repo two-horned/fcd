@@ -145,7 +145,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       extends BinaryPrintable("~", p, q)
       with Parser[R ~ U] {
 
-    def results = (for { r <- p.results; u <- q.results } yield (r, u)).distinct
+    def results = (for { r <- p.results; u <- q.results } yield (r, u))
     // q.failed forces q, which might not terminate for grammars with
     // infinite many nonterminals, like:
     //   def foo(p) = 'a' ~ foo(p << 'a')
@@ -207,7 +207,7 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
       extends BinaryPrintable("&", p, q)
       with Parser[(R, U)] {
     def results =
-      (for { r <- p.results; u <- q.results } yield ((r, u))).distinct
+      (for { r <- p.results; u <- q.results } yield ((r, u)))
     def failed = p.failed || q.failed
     def accepts = p.accepts && q.accepts
     def consume = (in: Elem) => (p consume in) and (q consume in)
