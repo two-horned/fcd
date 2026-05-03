@@ -7,7 +7,7 @@ import java.io.ByteArrayInputStream
 // Print-Helpers and other debugging tools
 trait Printable {
 
-  def results: List[Any]
+  def results: Iterable[Any]
   def failed: Boolean
   def name: String
 
