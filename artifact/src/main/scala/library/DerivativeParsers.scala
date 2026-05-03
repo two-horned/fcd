@@ -234,23 +234,22 @@ trait DerivativeParsers extends Parsers { self: DerivedOps =>
   class Nonterminal[R](_p: => Parser[R]) extends Parser[R] {
     lazy val p = _p
 
-    def accepts: Boolean = propertiesFix.nullable.value
-    def failed: Boolean = propertiesFix.empty.value
+    def accepts: Boolean = nullableFix.nullable.value
+    def failed: Boolean = emptyFix.empty.value
     def results: Results[R] = resultsFix.results.value
 
-    // This separation into two fixed points is essential to
+    // This separation into three fixed points is essential to
     // prevent excessive recomputation.
-    private object propertiesFix extends Attributed {
-      object nullable extends Attribute[Boolean](false, _ || _, implies)
+    private object emptyFix extends Attributed {
       object empty extends Attribute[Boolean](true, _ && _, follows)
-
       empty := p.failed
-      nullable := p.accepts
+      override protected def updateAttributes() = empty.update()
+    }
 
-      override protected def updateAttributes() = {
-        empty.update()
-        nullable.update()
-      }
+    private object nullableFix extends Attributed {
+      object nullable extends Attribute[Boolean](false, _ || _, implies)
+      nullable := p.accepts
+      override protected def updateAttributes() = nullable.update()
     }
 
     private object resultsFix extends Attributed {
