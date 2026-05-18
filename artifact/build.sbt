@@ -1,6 +1,6 @@
 name := "first-class-derivatives"
 
-version := "2.0.1"
+version := "preopt"
 
 scalaVersion := "3.7.4"
 
